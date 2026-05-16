@@ -28,19 +28,50 @@ RSS_FEEDS = [
     {"name": "ACM TOCHI",           "url": "https://dl.acm.org/action/showFeed?type=etoc&feed=rss&jc=tochi", "cat": "논문"},
 ]
 
+def load_feeds_from_db():
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+        res = sb.table('feeds').select('id,url,name,tag').eq('active', True).execute()
+        return [{'id': f['id'], 'url': f['url'], 'name': f['name'], 'cat': f['tag']} for f in (res.data or [])]
+    except Exception:
+        return None
+
 def fetch_articles(max_per_feed=5):
+    feeds = load_feeds_from_db() or [{'id': None, **{k: f[k] for k in ('url','name','cat')}} for f in RSS_FEEDS]
     articles = []
-    for feed in RSS_FEEDS:
+    for feed in feeds:
         try:
             parsed = feedparser.parse(feed['url'])
             for entry in parsed.entries[:max_per_feed]:
                 summary = (entry.get('summary') or entry.get('description') or '')[:300]
-                articles.append({'source': feed['name'], 'cat': feed['cat'],
+                pub = ''
+                if entry.get('published_parsed'):
+                    import time as _t
+                    pub = datetime.fromtimestamp(_t.mktime(entry.published_parsed)).isoformat()
+                articles.append({'feed_id': feed.get('id'), 'source': feed['name'], 'cat': feed['cat'],
                     'title': entry.get('title','')[:120], 'summary': summary,
-                    'url': entry.get('link',''), 'date': entry.get('published','')[:16]})
+                    'url': entry.get('link',''), 'date': entry.get('published','')[:16],
+                    'published_at': pub})
         except Exception as e:
             print(f"  [skip] {feed['name']}: {e}")
     return articles
+
+def save_articles_to_db(articles, today):
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return
+    sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+    rows = [{'feed_id': a.get('feed_id'), 'title': a['title'], 'url': a['url'],
+             'summary': a.get('summary',''), 'published_at': a.get('published_at') or None,
+             'date': today}
+            for a in articles if a.get('url')]
+    # upsert in batches of 50
+    for i in range(0, len(rows), 50):
+        try:
+            sb.table('articles').upsert(rows[i:i+50], on_conflict='url').execute()
+        except Exception as e:
+            print(f"  [articles upsert warn] {e}")
 
 def ask_claude(prompt):
     result = subprocess.run(['claude', '-p', prompt], capture_output=True, text=True, timeout=120)
@@ -106,6 +137,7 @@ def main():
 
     print("3. Supabase 저장...")
     save_to_supabase(articles, digest, today, generated_at)
+    save_articles_to_db(articles, today)
 
     print("4. HTML 생성 (GitHub Pages 백업)...")
     html = build_html(articles, digest, generated_at)
