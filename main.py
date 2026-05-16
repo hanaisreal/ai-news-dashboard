@@ -1,12 +1,16 @@
 import feedparser, requests, json, os, sys, subprocess, ssl, certifi
 from datetime import datetime
 from pathlib import Path
+from supabase import create_client
 
 ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID   = os.getenv('TELEGRAM_CHAT_ID')
 GITHUB_PAGES_URL   = os.getenv('GITHUB_PAGES_URL', '')
+STREAMLIT_APP_URL  = os.getenv('STREAMLIT_APP_URL', '')
+SUPABASE_URL       = os.getenv('SUPABASE_URL', '')
+SUPABASE_KEY       = os.getenv('SUPABASE_KEY', '')
 
 RSS_FEEDS = [
     {"name": "Hugging Face Papers", "url": "https://huggingface.co/papers/rss.xml",    "cat": "논문"},
@@ -66,6 +70,22 @@ def build_html(articles, digest, generated_at):
         '커뮤니티':sum(1 for a in articles if a['cat']=='커뮤니티')}}, ensure_ascii=False)
     return open('template.html').read().replace('__DATA__', data_js).replace('__GENTIME__', generated_at)
 
+def save_to_supabase(articles, digest, today, generated_at):
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("   [skip] SUPABASE_URL/KEY 없음")
+        return
+    sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+    counts = {cat: sum(1 for a in articles if a['cat'] == cat)
+              for cat in ['논문', '뉴스', '뉴스레터', '커뮤니티']}
+    sb.table('reports').upsert({
+        'date': today,
+        'articles': articles,
+        'digest': digest,
+        'total': len(articles),
+        'counts': counts,
+        'generated_at': generated_at,
+    }, on_conflict='date').execute()
+
 def send_telegram(url, total):
     today = datetime.now().strftime('%m/%d')
     requests.post(f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
@@ -81,15 +101,21 @@ def main():
     digest = get_digest(articles)
     print(f"   클러스터 {len(digest['clusters'])}개")
 
+    today = datetime.now().strftime('%Y-%m-%d')
     generated_at = datetime.now().strftime('%Y년 %m월 %d일 %H:%M 생성')
-    print("3. HTML 생성...")
+
+    print("3. Supabase 저장...")
+    save_to_supabase(articles, digest, today, generated_at)
+
+    print("4. HTML 생성 (GitHub Pages 백업)...")
     html = build_html(articles, digest, generated_at)
     Path('index.html').write_text(html, encoding='utf-8')
     print("   완료")
 
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and GITHUB_PAGES_URL:
-        print("4. 텔레그램 전송...")
-        send_telegram(GITHUB_PAGES_URL, len(articles))
+    app_url = STREAMLIT_APP_URL or GITHUB_PAGES_URL
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and app_url:
+        print("5. 텔레그램 전송...")
+        send_telegram(app_url, len(articles))
 
     print("=== 완료 ===")
 
