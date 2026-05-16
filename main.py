@@ -175,13 +175,26 @@ def save_to_supabase(articles, digest, today, generated_at):
         'generated_at': generated_at,
     }, on_conflict='date').execute()
 
-def send_telegram(reader_url, dashboard_url, total):
+def send_telegram(total, digest):
     today = datetime.now().strftime('%m/%d')
-    text = (f"📰 오늘의 AI 뉴스 ({today}) — {total}개 수집\n\n"
-            f"👆 리더 (Unread 스타일)\n{reader_url}\n\n"
-            f"📊 대시보드 (클러스터 분석)\n{dashboard_url}")
-    requests.post(f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
-        json={'chat_id': TELEGRAM_CHAT_ID, 'text': text}, timeout=10)
+    trends = digest.get('trends', [])
+    trends_text = '\n'.join(f'• {t}' for t in trends[:3]) if trends else ''
+
+    text = (f"<b>📰 오늘의 AI 뉴스 — {today}</b>\n"
+            f"총 <b>{total}개</b> 아티클\n\n"
+            + (trends_text if trends_text else ''))
+
+    keyboard = {'inline_keyboard': [[
+        {'text': '📱 AI 뉴스 리더 열기',
+         'url': 'https://hanaisreal.github.io/ai-news-dashboard/reader.html'}
+    ]]}
+
+    requests.post(
+        f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
+        json={'chat_id': TELEGRAM_CHAT_ID, 'text': text,
+              'parse_mode': 'HTML', 'reply_markup': keyboard},
+        timeout=10
+    )
 
 def main():
     print("1. RSS 수집 중...")
@@ -205,11 +218,9 @@ def main():
     Path('index.html').write_text(html, encoding='utf-8')
     print("   완료")
 
-    reader_url    = (GITHUB_PAGES_URL.rstrip('/') + '/reader.html') if GITHUB_PAGES_URL else ''
-    dashboard_url = STREAMLIT_APP_URL or GITHUB_PAGES_URL
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and reader_url:
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
         print("5. 텔레그램 전송...")
-        send_telegram(reader_url, dashboard_url, len(articles))
+        send_telegram(len(articles), digest)
 
     print("=== 완료 ===")
 
