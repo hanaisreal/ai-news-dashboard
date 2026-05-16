@@ -1,9 +1,23 @@
 import feedparser, requests, json, os, sys, subprocess, ssl, certifi
+import trafilatura
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from supabase import create_client
 
 ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
+
+def fetch_content(url):
+    try:
+        html = trafilatura.fetch_url(url)
+        if html:
+            text = trafilatura.extract(html, include_comments=False, include_tables=False,
+                                       no_fallback=False)
+            if text:
+                return text[:4000]
+    except Exception:
+        pass
+    return None
 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID   = os.getenv('TELEGRAM_CHAT_ID')
@@ -62,11 +76,25 @@ def save_articles_to_db(articles, today):
     if not SUPABASE_URL or not SUPABASE_KEY:
         return
     sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+    # 본문 병렬 수집 (최대 10개 동시)
+    valid = [a for a in articles if a.get('url')]
+    print(f"   본문 수집 중 ({len(valid)}개)…")
+    contents = {}
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        futs = {ex.submit(fetch_content, a['url']): a['url'] for a in valid}
+        done = 0
+        for fut in as_completed(futs):
+            contents[futs[fut]] = fut.result()
+            done += 1
+            if done % 10 == 0:
+                print(f"   {done}/{len(valid)}")
+
     rows = [{'feed_id': a.get('feed_id'), 'title': a['title'], 'url': a['url'],
-             'summary': a.get('summary',''), 'published_at': a.get('published_at') or None,
-             'date': today}
-            for a in articles if a.get('url')]
-    # upsert in batches of 50
+             'summary': a.get('summary', ''), 'content': contents.get(a['url']),
+             'published_at': a.get('published_at') or None, 'date': today}
+            for a in valid]
+
     for i in range(0, len(rows), 50):
         try:
             sb.table('articles').upsert(rows[i:i+50], on_conflict='url').execute()
