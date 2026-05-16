@@ -278,6 +278,110 @@
     /* 스토리 볼드: 파란 포인트 컬러 */
     .story-body strong { color: #185FA5; }
 
+    /* ── Story visual ────────────────────────────────────────────────── */
+    /* 💡 마지막 줄 강조 */
+    .story-highlight {
+      background: linear-gradient(135deg, #FFFBEB, #FEF9E7);
+      border-left: 3px solid #F59E0B;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 14px !important;
+      margin-top: 18px;
+      color: #78350F;
+    }
+    .story-body > p { margin-bottom: 16px; }
+    .story-body > p:first-child { font-size: 15px; font-weight: 500; }
+    .story-body strong { color: #185FA5; }
+    /* 스토리 스코프 전환 문장 — "결국..." */
+    .story-body > p:not(:first-child):not(:last-child) { color: #2a2a2a; }
+
+    /* ── Settings modal ──────────────────────────────────────────────── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 800;
+      align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-card {
+      background: var(--sur); border-radius: 16px;
+      padding: 24px; width: 90%; max-width: 400px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .modal-sub { font-size: 12px; color: var(--t3); margin-bottom: 16px; }
+    .modal-label { font-size: 12px; font-weight: 600; color: var(--t2); margin-bottom: 6px; }
+    .modal-input {
+      width: 100%; border: 1px solid var(--bdr); border-radius: 8px;
+      padding: 9px 12px; font-size: 13px; font-family: monospace;
+      outline: none; margin-bottom: 6px;
+    }
+    .modal-input:focus { border-color: var(--ac); }
+    .modal-hint { font-size: 11px; color: var(--t3); margin-bottom: 16px; }
+    .modal-btns { display: flex; gap: 8px; }
+    .modal-btn {
+      flex: 1; padding: 9px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    .modal-btn-primary { background: var(--ac); color: #fff; }
+    .modal-btn-primary:active { background: #0e4a82; }
+    .modal-btn-secondary { background: var(--bg); color: var(--t2); }
+
+    /* ── Float explain button ────────────────────────────────────────── */
+    .float-explain {
+      display: none; position: fixed; z-index: 700;
+      background: #7C3AED; color: #fff;
+      border: none; border-radius: 20px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(124,58,237,0.4);
+      white-space: nowrap; gap: 4px; align-items: center;
+      transform: translateX(-50%);
+    }
+    .float-explain:active { background: #6D28D9; }
+
+    /* ── Explain popup ───────────────────────────────────────────────── */
+    .explain-popup {
+      display: none; position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 560px;
+      background: var(--sur); border-radius: 16px 16px 0 0;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
+      z-index: 700; padding: 16px 20px 32px;
+    }
+    .explain-popup.open { display: block; }
+    .explain-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .explain-hdr-title { font-size: 13px; font-weight: 700; color: #7C3AED; }
+    .explain-close {
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: var(--t3); padding: 2px 6px;
+    }
+    .explain-quote {
+      font-size: 12px; color: var(--t3); font-style: italic;
+      border-left: 2px solid #D8B4FE; padding-left: 8px;
+      margin-bottom: 12px; line-height: 1.5;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .explain-body {
+      font-size: 14px; color: var(--t1); line-height: 1.8;
+      word-break: break-word;
+    }
+    .explain-body.loading {
+      color: var(--t3); font-style: italic;
+    }
+    .explain-dots::after {
+      content: ''; animation: dots 1.2s infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      33%  { content: '.'; }
+      66%  { content: '..'; }
+      100% { content: '...'; }
+    }
+
     /* ── States ─────────────────────────────────────────────────────── */
     .state { padding: 60px 20px; text-align: center; color: var(--t3); font-size: 14px; }
     .state-icon { font-size: 36px; margin-bottom: 10px; }
@@ -303,6 +407,37 @@
   <button class="hbtn on"  id="f-all"    onclick="setF('all')">전체</button>
   <button class="hbtn"     id="f-unread" onclick="setF('unread')">안읽음</button>
   <button class="hbtn"     id="f-today"  onclick="setF('today')">오늘</button>
+  <button class="hbtn"     onclick="openSettings()" title="API 키 설정">⚙️</button>
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal-bg" id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal-card">
+    <div class="modal-title">⚙️ 설정</div>
+    <div class="modal-sub">Anthropic API 키를 저장하면 텍스트 선택 시 즉석 AI 설명을 볼 수 있어요.</div>
+    <div class="modal-label">Anthropic API 키</div>
+    <input class="modal-input" id="api-key-input" type="password" placeholder="sk-ant-api03-...">
+    <div class="modal-hint">console.anthropic.com에서 발급 · 이 기기에만 저장됩니다</div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-secondary" onclick="closeSettings()">닫기</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveApiKey()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 텍스트 선택 → 설명 버튼 -->
+<button class="float-explain" id="float-explain" onclick="triggerExplain()">
+  💡 설명하기
+</button>
+
+<!-- 설명 팝업 -->
+<div class="explain-popup" id="explain-popup">
+  <div class="explain-hdr">
+    <span class="explain-hdr-title">💡 AI 설명</span>
+    <button class="explain-close" onclick="closeExplain()">✕</button>
+  </div>
+  <div class="explain-quote" id="explain-quote"></div>
+  <div class="explain-body" id="explain-body"></div>
 </div>
 
 <div class="layout">
@@ -431,6 +566,13 @@ async function loadStory() {
   const bodyEl = document.getElementById('story-body');
   bodyEl.classList.add('md');
   bodyEl.innerHTML = md(data.story);
+
+  // 💡 로 시작하는 마지막 p 강조 처리
+  const lastP = bodyEl.querySelector('p:last-child');
+  if (lastP && lastP.textContent.trimStart().startsWith('💡')) {
+    lastP.classList.add('story-highlight');
+  }
+
   document.getElementById('story-date').textContent = data.generated_at || '';
   document.getElementById('story-wrap').style.display = 'block';
   toggleStory(true);
@@ -776,6 +918,117 @@ function relT(iso) {
 function esc(s) {
   return String(s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  const key = localStorage.getItem('anth_key') || '';
+  document.getElementById('api-key-input').value = key ? '••••••••' + key.slice(-6) : '';
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (val && !val.startsWith('•')) {
+    localStorage.setItem('anth_key', val);
+    showToast('✅ API 키 저장됨');
+  }
+  closeSettings();
+}
+
+// ── Text selection → float explain ───────────────────────────────────────────
+let _selText = '';
+let _selTimer = null;
+
+document.addEventListener('selectionchange', () => {
+  clearTimeout(_selTimer);
+  _selTimer = setTimeout(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) { hideFloatExplain(); return; }
+    const text = sel.toString().trim();
+    if (text.length < 8) { hideFloatExplain(); return; }
+
+    // 패널 내부에서만
+    const panel = document.getElementById('panel');
+    const range = sel.getRangeAt(0);
+    if (!panel.contains(range.commonAncestorContainer)) { hideFloatExplain(); return; }
+
+    _selText = text;
+    const rect = range.getBoundingClientRect();
+    const btn  = document.getElementById('float-explain');
+    btn.style.display = 'flex';
+    // 선택 영역 바로 아래, 화면 경계 안에 배치
+    const top = Math.min(rect.bottom + 8, window.innerHeight - 60);
+    const left = Math.max(60, Math.min(rect.left + rect.width / 2, window.innerWidth - 60));
+    btn.style.top  = top  + 'px';
+    btn.style.left = left + 'px';
+  }, 120);
+});
+
+function hideFloatExplain() {
+  document.getElementById('float-explain').style.display = 'none';
+}
+
+// ── Explain ───────────────────────────────────────────────────────────────────
+async function triggerExplain() {
+  hideFloatExplain();
+  const apiKey = localStorage.getItem('anth_key');
+  if (!apiKey) { openSettings(); showToast('API 키를 먼저 저장해주세요'); return; }
+  if (!_selText) return;
+
+  // 팝업 열기 + 로딩
+  const popup  = document.getElementById('explain-popup');
+  const quote  = document.getElementById('explain-quote');
+  const body   = document.getElementById('explain-body');
+  quote.textContent = `"${_selText.slice(0, 120)}${_selText.length > 120 ? '…' : ''}"`;
+  body.className    = 'explain-body loading';
+  body.innerHTML    = '<span class="explain-dots">생각 중</span>';
+  popup.classList.add('open');
+
+  // 컨텍스트: 아티클 제목 + 한국어 요약
+  const ctx = [curArt?.ttl, curArt?.sumKo].filter(Boolean).join('\n');
+  const prompt =
+    `아티클: "${curArt?.ttl || ''}"\n` +
+    (ctx ? `컨텍스트: ${ctx.slice(0, 400)}\n\n` : '') +
+    `선택한 부분: "${_selText}"\n\n` +
+    `이 부분을 쉽게 설명해줘. 배경지식 없어도 이해할 수 있게, 2~3문장으로. 한국어로.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      body.className   = 'explain-body';
+      body.textContent = 'API 오류: ' + (err.error?.message || resp.status);
+      return;
+    }
+
+    const data = await resp.json();
+    body.className = 'explain-body md';
+    body.innerHTML = md(data.content[0].text);
+  } catch (e) {
+    body.className   = 'explain-body';
+    body.textContent = '오류: ' + e.message;
+  }
+}
+
+function closeExplain() {
+  document.getElementById('explain-popup').classList.remove('open');
 }
 </script>
 </body>
