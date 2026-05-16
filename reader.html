@@ -407,22 +407,6 @@
   <button class="hbtn on"  id="f-all"    onclick="setF('all')">전체</button>
   <button class="hbtn"     id="f-unread" onclick="setF('unread')">안읽음</button>
   <button class="hbtn"     id="f-today"  onclick="setF('today')">오늘</button>
-  <button class="hbtn"     onclick="openSettings()" title="API 키 설정">⚙️</button>
-</div>
-
-<!-- 설정 모달 -->
-<div class="modal-bg" id="settings-modal" onclick="if(event.target===this)closeSettings()">
-  <div class="modal-card">
-    <div class="modal-title">⚙️ 설정</div>
-    <div class="modal-sub">Anthropic API 키를 저장하면 텍스트 선택 시 즉석 AI 설명을 볼 수 있어요.</div>
-    <div class="modal-label">Anthropic API 키</div>
-    <input class="modal-input" id="api-key-input" type="password" placeholder="sk-ant-api03-...">
-    <div class="modal-hint">console.anthropic.com에서 발급 · 이 기기에만 저장됩니다</div>
-    <div class="modal-btns">
-      <button class="modal-btn modal-btn-secondary" onclick="closeSettings()">닫기</button>
-      <button class="modal-btn modal-btn-primary" onclick="saveApiKey()">저장</button>
-    </div>
-  </div>
 </div>
 
 <!-- 텍스트 선택 → 설명 버튼 -->
@@ -430,15 +414,6 @@
   💡 설명하기
 </button>
 
-<!-- 설명 팝업 -->
-<div class="explain-popup" id="explain-popup">
-  <div class="explain-hdr">
-    <span class="explain-hdr-title">💡 AI 설명</span>
-    <button class="explain-close" onclick="closeExplain()">✕</button>
-  </div>
-  <div class="explain-quote" id="explain-quote"></div>
-  <div class="explain-body" id="explain-body"></div>
-</div>
 
 <div class="layout">
   <div class="sidebar" id="sb">
@@ -920,24 +895,6 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// ── Settings ──────────────────────────────────────────────────────────────────
-function openSettings() {
-  const key = localStorage.getItem('anth_key') || '';
-  document.getElementById('api-key-input').value = key ? '••••••••' + key.slice(-6) : '';
-  document.getElementById('settings-modal').classList.add('open');
-}
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('open');
-}
-function saveApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  if (val && !val.startsWith('•')) {
-    localStorage.setItem('anth_key', val);
-    showToast('✅ API 키 저장됨');
-  }
-  closeSettings();
-}
-
 // ── Text selection → float explain ───────────────────────────────────────────
 let _selText = '';
 let _selTimer = null;
@@ -971,64 +928,22 @@ function hideFloatExplain() {
   document.getElementById('float-explain').style.display = 'none';
 }
 
-// ── Explain ───────────────────────────────────────────────────────────────────
-async function triggerExplain() {
+// ── Explain — claude.ai OAuth 방식 ───────────────────────────────────────────
+function triggerExplain() {
   hideFloatExplain();
-  const apiKey = localStorage.getItem('anth_key');
-  if (!apiKey) { openSettings(); showToast('API 키를 먼저 저장해주세요'); return; }
   if (!_selText) return;
 
-  // 팝업 열기 + 로딩
-  const popup  = document.getElementById('explain-popup');
-  const quote  = document.getElementById('explain-quote');
-  const body   = document.getElementById('explain-body');
-  quote.textContent = `"${_selText.slice(0, 120)}${_selText.length > 120 ? '…' : ''}"`;
-  body.className    = 'explain-body loading';
-  body.innerHTML    = '<span class="explain-dots">생각 중</span>';
-  popup.classList.add('open');
-
-  // 컨텍스트: 아티클 제목 + 한국어 요약
-  const ctx = [curArt?.ttl, curArt?.sumKo].filter(Boolean).join('\n');
   const prompt =
-    `아티클: "${curArt?.ttl || ''}"\n` +
-    (ctx ? `컨텍스트: ${ctx.slice(0, 400)}\n\n` : '') +
-    `선택한 부분: "${_selText}"\n\n` +
-    `이 부분을 쉽게 설명해줘. 배경지식 없어도 이해할 수 있게, 2~3문장으로. 한국어로.`;
+    `다음 AI 아티클에서 특정 부분이 이해가 안 가서 설명을 요청해.\n\n` +
+    `📄 아티클: "${curArt?.ttl || ''}"\n` +
+    (curArt?.sumKo ? `📝 요약: ${curArt.sumKo.slice(0, 400)}\n` : '') +
+    (curArt?.url   ? `🔗 출처: ${curArt.url}\n` : '') +
+    `\n❓ 내가 선택한 부분:\n"${_selText}"\n\n` +
+    `이 부분을 쉽게 설명해줘. 배경지식 없어도 이해할 수 있게, 한국어로 2~3문장으로.`;
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      body.className   = 'explain-body';
-      body.textContent = 'API 오류: ' + (err.error?.message || resp.status);
-      return;
-    }
-
-    const data = await resp.json();
-    body.className = 'explain-body md';
-    body.innerHTML = md(data.content[0].text);
-  } catch (e) {
-    body.className   = 'explain-body';
-    body.textContent = '오류: ' + e.message;
-  }
-}
-
-function closeExplain() {
-  document.getElementById('explain-popup').classList.remove('open');
+  navigator.clipboard.writeText(prompt).catch(() => {});
+  showToast('📋 복사됨 — Claude에 붙여넣기 하세요');
+  window.open('https://claude.ai/new', '_blank');
 }
 </script>
 </body>
