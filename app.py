@@ -2,6 +2,9 @@ import streamlit as st
 from supabase import create_client
 import os
 
+# st.dialog: 1.36+ stable, 1.34 experimental
+_dialog = getattr(st, 'dialog', st.experimental_dialog)
+
 st.set_page_config(
     page_title="AI 뉴스 대시보드",
     page_icon="📊",
@@ -71,7 +74,7 @@ if 'date' in st.query_params and st.session_state.sel_date is None:
 
 # ── Dialogs ───────────────────────────────────────────────────────────────────
 
-@st.experimental_dialog("💾 폴더에 저장")
+@_dialog("💾 폴더에 저장")
 def dlg_save_article(article):
     folders = get_folders()
     sel = st.selectbox("폴더 선택", [f['name'] for f in folders])
@@ -89,7 +92,7 @@ def dlg_save_article(article):
         get_bookmarks.clear()
         st.rerun()
 
-@st.experimental_dialog("📌 리포트 저장")
+@_dialog("📌 리포트 저장")
 def dlg_save_report(report):
     folders = get_folders()
     sel = st.selectbox("폴더 선택", [f['name'] for f in folders])
@@ -104,7 +107,7 @@ def dlg_save_report(report):
         get_bookmarks.clear()
         st.rerun()
 
-@st.experimental_dialog("📁 새 폴더 만들기")
+@_dialog("📁 새 폴더 만들기")
 def dlg_new_folder():
     name = st.text_input("폴더 이름")
     color = st.color_picker("색상", "#185FA5")
