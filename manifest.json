@@ -1,0 +1,19 @@
+{
+  "name": "AI 뉴스 리더",
+  "short_name": "AI뉴스",
+  "description": "매일 AI 뉴스를 모아보는 개인 리더",
+  "start_url": "/ai-news-dashboard/reader.html",
+  "scope": "/ai-news-dashboard/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f5f3",
+  "theme_color": "#185FA5",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

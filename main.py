@@ -117,10 +117,13 @@ def save_to_supabase(articles, digest, today, generated_at):
         'generated_at': generated_at,
     }, on_conflict='date').execute()
 
-def send_telegram(url, total):
+def send_telegram(reader_url, dashboard_url, total):
     today = datetime.now().strftime('%m/%d')
+    text = (f"📰 오늘의 AI 뉴스 ({today}) — {total}개 수집\n\n"
+            f"👆 리더 (Unread 스타일)\n{reader_url}\n\n"
+            f"📊 대시보드 (클러스터 분석)\n{dashboard_url}")
     requests.post(f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
-        json={'chat_id': TELEGRAM_CHAT_ID, 'text': f"📊 오늘의 AI 리포트 ({today})\n총 {total}개 수집\n\n{url}"}, timeout=10)
+        json={'chat_id': TELEGRAM_CHAT_ID, 'text': text}, timeout=10)
 
 def main():
     print("1. RSS 수집 중...")
@@ -144,10 +147,11 @@ def main():
     Path('index.html').write_text(html, encoding='utf-8')
     print("   완료")
 
-    app_url = STREAMLIT_APP_URL or GITHUB_PAGES_URL
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and app_url:
+    reader_url    = (GITHUB_PAGES_URL.rstrip('/') + '/reader.html') if GITHUB_PAGES_URL else ''
+    dashboard_url = STREAMLIT_APP_URL or GITHUB_PAGES_URL
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID and reader_url:
         print("5. 텔레그램 전송...")
-        send_telegram(app_url, len(articles))
+        send_telegram(reader_url, dashboard_url, len(articles))
 
     print("=== 완료 ===")
 
