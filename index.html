@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘의 AI 리포트</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #f8f8f6;
+      color: #1a1a1a;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 28px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 44px 0 28px;
+      border-bottom: 1px solid #e8e8e4;
+      margin-bottom: 28px;
+    }
+    header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.4px; }
+    .gentime { margin-top: 5px; font-size: 12px; color: #999; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 0.5px solid #e0e0dc;
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .stat-card .lbl { font-size: 11px; color: #999; margin-bottom: 6px; }
+    .stat-card .val { font-size: 30px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+    .stat-card .unit { font-size: 13px; color: #888; margin-left: 2px; font-weight: 400; }
+
+    /* ── Section heading ── */
+    .sec-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 18px;
+    }
+
+    /* ── Flow diagram ── */
+    .flow-section { border-top: 1px solid #e8e8e4; padding-top: 32px; margin-bottom: 36px; }
+    .flow-wrap { position: relative; }
+
+    .flow-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-col { padding: 0 12px; }
+    .flow-col:first-child { padding-left: 0; }
+    .flow-col:last-child  { padding-right: 0; }
+
+    .col-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+    }
+
+    .src-group { margin-bottom: 18px; }
+
+    .src-box {
+      background: #fff;
+      border: 0.5px solid #d8d8d4;
+      border-radius: 7px;
+      padding: 7px 10px;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+    .src-box .sname { font-weight: 600; color: #444; }
+    .src-box .stitle {
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cls-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+    }
+    .cls-box .cls-name { font-weight: 700; font-size: 13px; }
+    .cls-box .cls-desc { font-size: 11px; margin-top: 3px; opacity: 0.75; }
+    .cls-box .cls-cnt  { font-size: 10px; margin-top: 5px; opacity: 0.55; }
+
+    .thm-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+    }
+    .thm-box .thm-name { font-weight: 700; font-size: 13px; }
+
+    .flow-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Must reads ── */
+    .mustreads-section { border-top: 1px solid #e8e8e4; padding-top: 32px; margin-bottom: 36px; }
+
+    .mr-card {
+      background: #fff;
+      border: 0.5px solid #e0e0dc;
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+    }
+    .mr-num {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ebebeb;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      padding-top: 3px;
+    }
+    .mr-title {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      text-decoration: none;
+      margin-bottom: 9px;
+      line-height: 1.45;
+    }
+    .mr-title:hover { text-decoration: underline; }
+    .mr-why  { font-size: 12px; color: #666; margin-bottom: 5px; }
+    .mr-hook { font-size: 12px; color: #185FA5; margin-bottom: 10px; }
+    .mr-exp  {
+      font-size: 12px;
+      color: #777;
+      line-height: 1.75;
+      border-top: 1px solid #f0f0ec;
+      padding-top: 10px;
+    }
+
+    /* ── Cluster lists ── */
+    .clusters-section { border-top: 1px solid #e8e8e4; padding-top: 32px; }
+
+    .cg {
+      border: 0.5px solid #e0e0dc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .cg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cg-header:hover { background: #fafaf8; }
+    .cg-header-left { display: flex; align-items: center; gap: 10px; }
+    .cg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cg-lbl { font-weight: 600; font-size: 14px; }
+    .cg-desc { font-size: 12px; color: #aaa; }
+    .cg-cnt  { font-size: 12px; color: #bbb; }
+    .cg-chevron { font-size: 10px; color: #bbb; transition: transform 0.18s; }
+    .cg-chevron.open { transform: rotate(180deg); }
+
+    .cg-body {
+      background: #fff;
+      padding: 0 18px 14px;
+    }
+
+    .art-card { border-top: 1px solid #f2f2ee; padding: 12px 0; }
+    .art-meta { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+    .badge-src {
+      font-size: 10px;
+      background: #f2f2ee;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #666;
+      font-weight: 500;
+    }
+    .badge-cat { font-size: 10px; color: #bbb; }
+    .art-title { font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.4; margin-bottom: 4px; }
+    .art-summary { font-size: 12px; color: #888; line-height: 1.65; margin-bottom: 6px; }
+    .art-footer { display: flex; align-items: center; justify-content: space-between; }
+    .art-link { font-size: 11px; color: #185FA5; text-decoration: none; }
+    .art-link:hover { text-decoration: underline; }
+    .art-date { font-size: 10px; color: #ccc; }
+    .art-exp {
+      font-size: 11px;
+      color: #777;
+      line-height: 1.7;
+      background: #f8f8f6;
+      border-radius: 6px;
+      padding: 9px 11px;
+      margin-top: 8px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 720px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .flow-cols  { grid-template-columns: 1fr; }
+      .flow-svg   { display: none; }
+      .mr-card    { grid-template-columns: 1fr; }
+      .mr-num     { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>오늘의 AI 리포트</h1>
+    <div class="gentime" id="js-gentime"></div>
+  </header>
+
+  <div class="stats-grid" id="js-stats"></div>
+
+  <section class="flow-section">
+    <div class="sec-title">오늘의 흐름</div>
+    <div class="flow-wrap" id="js-flow-wrap">
+      <svg class="flow-svg" id="js-flow-svg"></svg>
+      <div class="flow-cols" id="js-flow-cols"></div>
+    </div>
+  </section>
+
+  <section class="mustreads-section">
+    <div class="sec-title">오늘 꼭 읽어야 할 글</div>
+    <div id="js-mustreads"></div>
+  </section>
+
+  <section class="clusters-section">
+    <div class="sec-title">클러스터별 전체 글</div>
+    <div id="js-cluster-lists"></div>
+  </section>
+
+</div>
+
+<script>
+const DATA = {"articles": [{"source": "arXiv AI", "cat": "논문", "title": "GraphBit: A Graph-based Agentic Framework for Non-Linear Agent Orchestration", "summary": "arXiv:2605.13848v1 Announce Type: new \nAbstract: Agentic LLM frameworks that rely on prompted orchestration, where the model itself determines workflow transitions, often suffer from hallucinated routing, infinite loops, and non-reproducible execution. We introduce GraphBit, an engine-orchestrated f", "url": "https://arxiv.org/abs/2605.13848", "date": "Sat, 16 May 2026"}, {"source": "arXiv AI", "cat": "논문", "title": "Mixed Integer Goal Programming for Personalized Meal Optimization with User-Defined Serving Granularity", "summary": "arXiv:2605.13849v1 Announce Type: new \nAbstract: Determining what to eat to satisfy nutritional requirements is one of the oldest optimization problems in operations research, yet existing formulations have two persistent limitations: continuous variables produce impractical fractional servings (1.7", "url": "https://arxiv.org/abs/2605.13849", "date": "Sat, 16 May 2026"}, {"source": "arXiv AI", "cat": "논문", "title": "A Two-Dimensional Framework for AI Agent Design Patterns: Cognitive Function and Execution Topology", "summary": "arXiv:2605.13850v1 Announce Type: new \nAbstract: Existing frameworks for LLM-based agent architectures describe systems from a single perspective: industry guides (Anthropic, Google, LangChain) focus on execution topology -- how data flows -- while cognitive science surveys focus on cognitive functi", "url": "https://arxiv.org/abs/2605.13850", "date": "Sat, 16 May 2026"}, {"source": "arXiv AI", "cat": "논문", "title": "Invisible Orchestrators Suppress Protective Behavior and Dissociate Power-Holders: Safety Risks in Multi-Agent LLM Syste", "summary": "arXiv:2605.13851v1 Announce Type: new \nAbstract: Multi-agent orchestration -- in which a hidden coordinator manages specialized worker agents -- is becoming the default architecture for enterprise AI deployment, yet the safety implications of orchestrator invisibility have never been empirically tes", "url": "https://arxiv.org/abs/2605.13851", "date": "Sat, 16 May 2026"}, {"source": "arXiv AI", "cat": "논문", "title": "PREPING: Building Agent Memory without Tasks", "summary": "arXiv:2605.13880v1 Announce Type: new \nAbstract: Agent memory is typically constructed either offline from curated demonstrations or online from post-deployment interactions. However, regardless of how it is built, an agent faces a cold-start gap when first introduced to a new environment without an", "url": "https://arxiv.org/abs/2605.13880", "date": "Sat, 16 May 2026"}, {"source": "MIT Tech Review", "cat": "뉴스", "title": "Musk v. Altman week 3: Musk and Altman traded blows over each other’s credibility. Now the jury will pick a side.", "summary": "In the final week of the Musk v. Altman trial, lawyers traded blows over Elon Musk’s and OpenAI CEO Sam Altman’s credibility. Altman was grilled on his alleged history of lying and self-dealing involving companies that do business with OpenAI. But he fired back, painting Musk as a power-seeker who w", "url": "https://www.technologyreview.com/2026/05/15/1137357/musk-v-altman-week-3/", "date": "Fri, 15 May 2026"}, {"source": "MIT Tech Review", "cat": "뉴스", "title": "The Download: China’s AI drama factory and the WHO’s missing health targets", "summary": "This is today&#8217;s edition of The Download, our weekday newsletter that provides a daily dose of what&#8217;s going on in the world of technology. How Chinese short dramas became AI content machines China’s short drama industry is fueled by bite-sized, melodramatic, and smutty shows built for sma", "url": "https://www.technologyreview.com/2026/05/15/1137341/the-download-china-short-drama-ai-who-health-targets/", "date": "Fri, 15 May 2026"}, {"source": "MIT Tech Review", "cat": "뉴스", "title": "The world is on track to miss its health targets", "summary": "Every year the World Health Organization publishes a global health statistics report. It features the numbers behind world health trends and, importantly, assesses whether we’re on track to reach ambitious goals set in 2015. It’s a bit like a health grade. The 2026 report was published on Wednesday.", "url": "https://www.technologyreview.com/2026/05/15/1137270/the-world-is-on-track-to-miss-its-health-targets/", "date": "Fri, 15 May 2026"}, {"source": "MIT Tech Review", "cat": "뉴스", "title": "How Chinese short dramas became AI content machines", "summary": "In a dimly lit bedroom, a frightened young woman is thrown onto a bed by a tall, muscular man. He grabs her hand, and flame-like vines crawl across her body, fusing with her flesh. She levitates, then drops. A dragon-shaped tattoo appears across her chest. “Two months,” the man says. “Give me an hei", "url": "https://www.technologyreview.com/2026/05/15/1137326/chinese-short-dramas-ai/", "date": "Fri, 15 May 2026"}, {"source": "MIT Tech Review", "cat": "뉴스", "title": "Data readiness for agentic AI in financial services", "summary": "Financial services companies have unique needs when it comes to business AI. They operate in one of the most highly regulated sectors while responding to external events that are updated by the second. As a result, the success of agentic AI in financial services depends less on the sophistication of", "url": "https://www.technologyreview.com/2026/05/14/1137034/data-readiness-for-agentic-ai-in-financial-services/", "date": "Thu, 14 May 2026"}, {"source": "TechCrunch AI", "cat": "뉴스", "title": "The OpenAI trial wraps up, and the Musk founder machine keeps spinning", "summary": "The Musk v. Altman trial came to a close this week, and the final arguments kept circling back to one question:&#160;can we trust the people in charge of AI?&#160;All of this is playing out as SpaceX charges toward what could be one of the largest IPOs in American history, with&#160;a whole generati", "url": "https://techcrunch.com/podcast/the-openai-trial-wraps-up-and-the-musk-founder-machine-keeps-spinning/", "date": "Fri, 15 May 2026"}, {"source": "TechCrunch AI", "cat": "뉴스", "title": "Silicon Valley’s vacationland needs a new energy provider just as AI is driving prices up", "summary": "Lake Tahoe, Silicon Valley's favorite vacation spot, is about to get hit with higher energy prices as AI drives demand for electricity.", "url": "https://techcrunch.com/2026/05/15/silicon-valleys-vacationland-needs-a-new-energy-provider-just-as-ai-is-driving-prices-up/", "date": "Fri, 15 May 2026"}, {"source": "TechCrunch AI", "cat": "뉴스", "title": "OpenAI launches ChatGPT for personal finance, will let you connect bank accounts", "summary": "Once users connect their accounts, they will see a dashboard of their portfolio performance, spending, subscriptions, and upcoming payments.", "url": "https://techcrunch.com/2026/05/15/openai-launches-chatgpt-for-personal-finance-will-let-you-connect-bank-accounts/", "date": "Fri, 15 May 2026"}, {"source": "TechCrunch AI", "cat": "뉴스", "title": "Runway started by helping filmmakers — now it wants to beat Google at AI", "summary": "AI video-generation startup Runway is betting that video generation is the path to world models. And that being an AI outsider is an advantage, not a liability.", "url": "https://techcrunch.com/2026/05/15/runway-started-by-helping-filmmakers-now-it-wants-to-beat-google-at-ai/", "date": "Fri, 15 May 2026"}, {"source": "TechCrunch AI", "cat": "뉴스", "title": "Osaurus brings both local and cloud AI models to your Mac", "summary": "Osaurus￼ combines local and cloud AI models in a Mac app that keeps users’ memory, files, and tools on their own hardware.", "url": "https://techcrunch.com/2026/05/15/osaurus-brings-both-local-and-cloud-ai-models-to-your-mac/", "date": "Fri, 15 May 2026"}, {"source": "Import AI", "cat": "뉴스레터", "title": "Import AI 456: RSI and economic growth; radical optionality for AI regulation; and a neural computer", "summary": "What laws does superintelligence demand?", "url": "https://importai.substack.com/p/import-ai-456-rsi-and-economic-growth", "date": "Mon, 11 May 2026"}, {"source": "Import AI", "cat": "뉴스레터", "title": "Import AI 455: AI systems are about to start building themselves.", "summary": "The first step towards recursive self improvement", "url": "https://importai.substack.com/p/import-ai-455-automating-ai-research", "date": "Mon, 04 May 2026"}, {"source": "Import AI", "cat": "뉴스레터", "title": "Import AI 454: Automating alignment research; safety study of a Chinese model; HiFloat4", "summary": "At what point do the financial markets price in the singularity?", "url": "https://importai.substack.com/p/import-ai-454-automating-alignment", "date": "Mon, 20 Apr 2026"}, {"source": "Import AI", "cat": "뉴스레터", "title": "Import AI 453: Breaking AI agents; MirrorCode; and ten views on gradual disempowerment", "summary": "Was fire equivalent to a singularity for people at the time?", "url": "https://importai.substack.com/p/import-ai-453-breaking-ai-agents", "date": "Mon, 13 Apr 2026"}, {"source": "Import AI", "cat": "뉴스레터", "title": "Import AI 452: Scaling laws for cyberwar; rising tides of AI automation; and a puzzle over gDP forecasting", "summary": "How much could AI revolutionize the economy?", "url": "https://importai.substack.com/p/import-ai-452-scaling-laws-for-cyberwar", "date": "Mon, 06 Apr 2026"}, {"source": "Latent Space", "cat": "뉴스레터", "title": "[AINews] Cerebras' $60B IPO: Slowly, then All at Once", "summary": "Congrats Big Chip!", "url": "https://www.latent.space/p/ainews-cerebras-60b-ipo-slowly-then", "date": "Sat, 16 May 2026"}, {"source": "Latent Space", "cat": "뉴스레터", "title": "[AINews] Everything is Conductor", "summary": "an ultra quiet day lets us highlight a smaller trend.", "url": "https://www.latent.space/p/ainews-everything-is-conductor", "date": "Fri, 15 May 2026"}, {"source": "Latent Space", "cat": "뉴스레터", "title": "AI-Native Healthcare: 100M Doctor Visits, 10–20 Hours Saved, Prior Auth in Minutes — Janie Lee & Chai Asawa, Abridge", "summary": "How Abridge is quietly turning the patient and clinician conversation into the operating system of healthcare", "url": "https://www.latent.space/p/abridge", "date": "Thu, 14 May 2026"}, {"source": "Latent Space", "cat": "뉴스레터", "title": "[AINews] Codex Rises, Claude Meters Programmatic Usage", "summary": "a quiet day lets us report on a long trend of the major coding agents", "url": "https://www.latent.space/p/ainews-codex-rises-claude-meters", "date": "Thu, 14 May 2026"}, {"source": "Latent Space", "cat": "뉴스레터", "title": "[AINews] The End of Finetuning", "summary": "a quiet day lets us reflect on whither finetuning", "url": "https://www.latent.space/p/ainews-the-end-of-finetuning", "date": "Wed, 13 May 2026"}, {"source": "ACM TOCHI", "cat": "논문", "title": "Crowd-Powered Discovery of Mental Health Self-Care Techniques in Higher Education", "summary": "ACM Transactions on Computer-Human Interaction, Volume 33, Issue 2, Page 1-30, April 2026. <br />", "url": "https://dl.acm.org/doi/abs/10.1145/3778348?af=R", "date": ""}, {"source": "ACM TOCHI", "cat": "논문", "title": "Towards Testing the Accessibility of Dynamic Visual Changes in Android Mobile GUI with Multi-Modal LLMs", "summary": "ACM Transactions on Computer-Human Interaction, Volume 33, Issue 2, Page 1-32, April 2026. <br />", "url": "https://dl.acm.org/doi/abs/10.1145/3793673?af=R", "date": ""}, {"source": "ACM TOCHI", "cat": "논문", "title": "Exploring Design Considerations for Group Recommendation Systems as a Social Catalyst", "summary": "ACM Transactions on Computer-Human Interaction, Volume 33, Issue 2, Page 1-38, April 2026. <br />", "url": "https://dl.acm.org/doi/abs/10.1145/3793676?af=R", "date": ""}, {"source": "ACM TOCHI", "cat": "논문", "title": "Bring-in Privacy Provisions but Shape-up Attitude Too: Building Privacy Experience in Mobile Platform Ecosystem", "summary": "ACM Transactions on Computer-Human Interaction, Volume 33, Issue 2, Page 1-42, April 2026. <br />", "url": "https://dl.acm.org/doi/abs/10.1145/3796219?af=R", "date": ""}, {"source": "ACM TOCHI", "cat": "논문", "title": "Sensorimotor Regularities as Alignment between Humans and Large Language Models", "summary": "ACM Transactions on Computer-Human Interaction, Volume 33, Issue 2, Page 1-48, April 2026. <br />", "url": "https://dl.acm.org/doi/abs/10.1145/3778353?af=R", "date": ""}], "digest": {"trends": ["Multi-agent orchestration 아키텍처의 표준화 경쟁 본격화", "AI의 금융·의료 실생활 서비스 통합 가속", "멀티에이전트 시스템의 안전성 취약점에 대한 경고 확산", "AI 컴퓨팅 수요 폭증과 에너지·인프라 병목 현실화", "인간-AI 상호작용 연구의 헬스케어·접근성 응용 확장"], "clusters": [{"label": "Agentic AI & 멀티에이전트 시스템", "desc": "비선형 에이전트 조율, 설계 패턴, 메모리 구성, 안전 위험까지 agentic AI의 구조적 토대를 다루는 논문·뉴스 묶음", "theme": "AI 아키텍처", "indices": [0, 2, 3, 4, 9], "color": "#185FA5", "bg": "#E6F1FB", "textColor": "#0C447C", "themeColor": "#0F6E56", "themeBg": "#E1F5EE"}, {"label": "AI 산업 격변 & 경제적 파급", "desc": "Musk-Altman 재판, OpenAI 금융 서비스 출시, Cerebras IPO, 에너지 비용 급등 등 AI 산업의 실물 경제 충돌 지점", "theme": "AI 산업·시장", "indices": [5, 10, 11, 12, 13, 14, 19, 20, 23, 24], "color": "#6B3FA0", "bg": "#F0E8FF", "textColor": "#4A1D96", "themeColor": "#185FA5", "themeBg": "#E6F1FB"}, {"label": "인간-AI 상호작용 & 사회적 영향", "desc": "ACM TOCHI 논문군과 헬스케어 AI 사례로 본 HCI 연구—정신건강, 접근성, 프라이버시, 의료 실무 자동화", "theme": "HCI & 사회", "indices": [1, 22, 25, 26, 27, 28, 29], "color": "#0F6E56", "bg": "#E1F5EE", "textColor": "#0C4A3A", "themeColor": "#6B3FA0", "themeBg": "#F0E8FF"}], "must_reads": [{"index": 3, "why": "멀티에이전트 시스템에서 숨겨진 orchestrator가 에이전트의 보호적 행동을 억제한다는 실증 결과는 현재 가장 뜨거운 agentic AI 안전 논의의 핵심을 찌른다", "hook": "멀티에이전트 파이프라인을 설계하거나 LLM 에이전트 안전성을 연구하는 독자라면 orchestrator 가시성이 에이전트 행동에 미치는 영향을 즉시 설계에 반영해야 한다"}, {"index": 12, "why": "OpenAI가 ChatGPT에 은행 계좌 직접 연동 기능을 출시한 것은 AI 어시스턴트가 민감한 금융 데이터 레이어로 진입하는 첫 대규모 사례로, 산업 지형을 바꿀 이정표다", "hook": "AI와 개인 금융 데이터의 결합이 가져올 프라이버시·보안 리스크와 사용자 경험 설계 문제는 HCI 및 AI 서비스 연구 모두에 새로운 연구 의제를 만든다"}], "explanations": {"3": "Invisible Orchestrators 논문은 멀티에이전트 LLM 시스템에서 숨겨진 조율자가 개별 에이전트의 보호적 행동을 억제하고 권력 구조 인식을 왜곡시킨다는 안전 위험을 실증적으로 분석했다. 에이전트가 자신을 감독하는 존재를 인식하지 못할 때 더 위험한 행동을 허용하는 경향이 나타났으며, 이는 기존 단일 에이전트 안전 연구가 다루지 못한 맹점이다. 멀티에이전트 파이프라인의 투명성 설계와 감사 메커니즘에 즉각적인 시사점을 제공한다.", "12": "OpenAI가 ChatGPT에 개인 금융 관리 기능을 추가해 은행 계좌 연동, 포트폴리오 성과 대시보드, 지출 및 구독 추적을 제공하는 대규모 서비스 확장을 발표했다. AI 어시스턴트가 민감한 금융 데이터에 직접 접근하는 첫 주류 사례로, 개인 금융 AI 시장의 경쟁 구도를 재편할 가능성이 높다. OpenAI의 수익화 전략 고도화와 AI의 실생활 인프라 통합이라는 두 흐름이 교차하는 중요한 분기점이다."}}, "generated_at": "2026년 05월 16일 18:33 생성", "total": 30, "counts": {"논문": 10, "뉴스": 10, "뉴스레터": 10, "커뮤니티": 0}};
+
+const { articles, digest, generated_at, total, counts } = DATA;
+const { clusters, must_reads, explanations } = digest;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+document.getElementById('js-gentime').textContent = generated_at;
+
+// ── Stats ────────────────────────────────────────────────────────────────────
+
+document.getElementById('js-stats').innerHTML = [
+  { lbl: '전체 수집',  val: total,                  unit: '개' },
+  { lbl: '논문',       val: counts['논문']    || 0,  unit: '편' },
+  { lbl: '뉴스',       val: counts['뉴스']    || 0,  unit: '건' },
+  { lbl: '커뮤니티',  val: counts['커뮤니티'] || 0,  unit: '개' },
+].map(s => `
+  <div class="stat-card">
+    <div class="lbl">${s.lbl}</div>
+    <div class="val">${s.val}<span class="unit">${s.unit}</span></div>
+  </div>`).join('');
+
+// ── Flow diagram ─────────────────────────────────────────────────────────────
+
+function buildFlow() {
+  const colsEl = document.getElementById('js-flow-cols');
+
+  // col 1 – source groups (one group per cluster)
+  const col1 = document.createElement('div');
+  col1.className = 'flow-col';
+  col1.innerHTML = '<div class="col-label">소스</div>';
+
+  const srcGroupEls = clusters.map((c, ci) => {
+    const srcMap = {};
+    c.indices.forEach(i => {
+      const a = articles[i];
+      if (!a) return;
+      if (!srcMap[a.source]) srcMap[a.source] = a.title;
+    });
+
+    const g = document.createElement('div');
+    g.className = 'src-group';
+    g.dataset.ci = ci;
+
+    Object.entries(srcMap).forEach(([name, title]) => {
+      const box = document.createElement('div');
+      box.className = 'src-box';
+      box.innerHTML = `<div class="sname">${esc(name)}</div>
+        <div class="stitle">${esc(title.slice(0, 38))}${title.length > 38 ? '…' : ''}</div>`;
+      g.appendChild(box);
+    });
+
+    col1.appendChild(g);
+    return g;
+  });
+
+  // col 2 – cluster boxes
+  const col2 = document.createElement('div');
+  col2.className = 'flow-col';
+  col2.innerHTML = '<div class="col-label">클러스터</div>';
+
+  const clsBoxEls = clusters.map(c => {
+    const el = document.createElement('div');
+    el.className = 'cls-box';
+    el.style.cssText = `background:${c.bg};color:${c.textColor}`;
+    el.innerHTML = `<div class="cls-name">${esc(c.label)}</div>
+      <div class="cls-desc">${esc(c.desc)}</div>
+      <div class="cls-cnt">${c.indices.length}개 글</div>`;
+    col2.appendChild(el);
+    return el;
+  });
+
+  // col 3 – theme boxes
+  const col3 = document.createElement('div');
+  col3.className = 'flow-col';
+  col3.innerHTML = '<div class="col-label">테마</div>';
+
+  const thmBoxEls = clusters.map(c => {
+    const el = document.createElement('div');
+    el.className = 'thm-box';
+    el.style.cssText = `background:${c.themeBg};color:${c.themeColor}`;
+    el.innerHTML = `<div class="thm-name">${esc(c.theme)}</div>`;
+    col3.appendChild(el);
+    return el;
+  });
+
+  colsEl.appendChild(col1);
+  colsEl.appendChild(col2);
+  colsEl.appendChild(col3);
+
+  requestAnimationFrame(() => drawArrows(srcGroupEls, clsBoxEls, thmBoxEls));
+}
+
+function drawArrows(srcGroupEls, clsBoxEls, thmBoxEls) {
+  const svg   = document.getElementById('js-flow-svg');
+  const wrap  = document.getElementById('js-flow-wrap');
+  const wRect = wrap.getBoundingClientRect();
+  const W = wrap.offsetWidth;
+  const H = wrap.offsetHeight;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width',  W);
+  svg.setAttribute('height', H);
+  svg.style.height = H + 'px';
+
+  let d = '';
+
+  clusters.forEach((c, ci) => {
+    const sg  = srcGroupEls[ci];
+    const cb  = clsBoxEls[ci];
+    const tb  = thmBoxEls[ci];
+    if (!sg || !cb || !tb) return;
+
+    const cbR = cb.getBoundingClientRect();
+    const tbR = tb.getBoundingClientRect();
+    const clsL  = cbR.left  - wRect.left;
+    const clsR  = cbR.right - wRect.left;
+    const clsY  = cbR.top   - wRect.top  + cbR.height / 2;
+    const thmL  = tbR.left  - wRect.left;
+    const thmY  = tbR.top   - wRect.top  + tbR.height / 2;
+
+    // cluster → theme
+    const mx = (clsR + thmL) / 2;
+    d += `<path d="M${clsR},${clsY} C${mx},${clsY} ${mx},${thmY} ${thmL},${thmY}"
+      fill="none" stroke="${c.color}" stroke-width="1.5" stroke-opacity="0.4"/>`;
+
+    // source boxes → cluster
+    sg.querySelectorAll('.src-box').forEach(sb => {
+      const sbR = sb.getBoundingClientRect();
+      const sx = sbR.right - wRect.left;
+      const sy = sbR.top   - wRect.top  + sbR.height / 2;
+      const mx2 = (sx + clsL) / 2;
+      d += `<path d="M${sx},${sy} C${mx2},${sy} ${mx2},${clsY} ${clsL},${clsY}"
+        fill="none" stroke="#ccc" stroke-width="1" stroke-opacity="0.45"/>`;
+    });
+  });
+
+  svg.innerHTML = d;
+}
+
+buildFlow();
+
+window.addEventListener('resize', () => {
+  document.getElementById('js-flow-svg').innerHTML = '';
+  clearTimeout(window._rtime);
+  window._rtime = setTimeout(() => {
+    const sgs = [...document.querySelectorAll('#js-flow-cols .src-group')];
+    const cbs = [...document.querySelectorAll('#js-flow-cols .cls-box')];
+    const tbs = [...document.querySelectorAll('#js-flow-cols .thm-box')];
+    drawArrows(sgs, cbs, tbs);
+  }, 80);
+});
+
+// ── Must reads ───────────────────────────────────────────────────────────────
+
+const mrEl = document.getElementById('js-mustreads');
+must_reads.forEach((mr, i) => {
+  const a   = articles[mr.index];
+  if (!a) return;
+  const exp = (explanations || {})[String(mr.index)] || '';
+  mrEl.innerHTML += `
+    <div class="mr-card">
+      <div class="mr-num">0${i + 1}</div>
+      <div>
+        <a href="${esc(a.url)}" target="_blank" rel="noopener" class="mr-title">${esc(a.title)}</a>
+        <div class="mr-why">📌 ${esc(mr.why)}</div>
+        <div class="mr-hook">↗ ${esc(mr.hook)}</div>
+        ${exp ? `<div class="mr-exp">${esc(exp)}</div>` : ''}
+      </div>
+    </div>`;
+});
+
+// ── Cluster lists ─────────────────────────────────────────────────────────────
+
+const clListEl = document.getElementById('js-cluster-lists');
+const clusteredIdx = new Set(clusters.flatMap(c => c.indices));
+
+clusters.forEach((c, ci) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'cg';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'cg-header';
+  hdr.innerHTML = `
+    <div class="cg-header-left">
+      <div class="cg-dot" style="background:${c.color}"></div>
+      <span class="cg-lbl">${esc(c.label)}</span>
+      <span class="cg-desc">— ${esc(c.desc)}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="cg-cnt">${c.indices.length}개</span>
+      <span class="cg-chevron open" id="chev-${ci}">▼</span>
+    </div>`;
+
+  const body = document.createElement('div');
+  body.className = 'cg-body';
+  body.id = `cgb-${ci}`;
+
+  c.indices.forEach(idx => {
+    const a   = articles[idx];
+    if (!a) return;
+    const exp = (explanations || {})[String(idx)] || '';
+    body.innerHTML += `
+      <div class="art-card">
+        <div class="art-meta">
+          <span class="badge-src">${esc(a.source)}</span>
+          <span class="badge-cat">${esc(a.cat)}</span>
+        </div>
+        <div class="art-title">${esc(a.title)}</div>
+        ${a.summary ? `<div class="art-summary">${esc(a.summary)}</div>` : ''}
+        <div class="art-footer">
+          <a href="${esc(a.url)}" target="_blank" rel="noopener" class="art-link">원문 보기 →</a>
+          ${a.date ? `<span class="art-date">${esc(a.date)}</span>` : ''}
+        </div>
+        ${exp ? `<div class="art-exp">${esc(exp)}</div>` : ''}
+      </div>`;
+  });
+
+  hdr.addEventListener('click', () => {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    const chev = document.getElementById(`chev-${ci}`);
+    chev.textContent = open ? '▶' : '▼';
+    chev.classList.toggle('open', !open);
+  });
+
+  wrap.appendChild(hdr);
+  wrap.appendChild(body);
+  clListEl.appendChild(wrap);
+});
+
+// 미분류 글
+const others = articles.filter((_, i) => !clusteredIdx.has(i));
+if (others.length) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cg';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'cg-header';
+  hdr.innerHTML = `
+    <div class="cg-header-left">
+      <div class="cg-dot" style="background:#ccc"></div>
+      <span class="cg-lbl">기타</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="cg-cnt">${others.length}개</span>
+      <span class="cg-chevron" id="chev-other">▶</span>
+    </div>`;
+
+  const body = document.createElement('div');
+  body.className = 'cg-body';
+  body.style.display = 'none';
+
+  others.forEach(a => {
+    body.innerHTML += `
+      <div class="art-card">
+        <div class="art-meta">
+          <span class="badge-src">${esc(a.source)}</span>
+          <span class="badge-cat">${esc(a.cat)}</span>
+        </div>
+        <div class="art-title">${esc(a.title)}</div>
+        ${a.summary ? `<div class="art-summary">${esc(a.summary)}</div>` : ''}
+        <div class="art-footer">
+          <a href="${esc(a.url)}" target="_blank" rel="noopener" class="art-link">원문 보기 →</a>
+          ${a.date ? `<span class="art-date">${esc(a.date)}</span>` : ''}
+        </div>
+      </div>`;
+  });
+
+  hdr.addEventListener('click', () => {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    const chev = document.getElementById('chev-other');
+    chev.textContent = open ? '▶' : '▼';
+    chev.classList.toggle('open', !open);
+  });
+
+  wrap.appendChild(hdr);
+  wrap.appendChild(body);
+  clListEl.appendChild(wrap);
+}
+</script>
+</body>
+</html>

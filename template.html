@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘의 AI 리포트</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #f8f8f6;
+      color: #1a1a1a;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 28px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 44px 0 28px;
+      border-bottom: 1px solid #e8e8e4;
+      margin-bottom: 28px;
+    }
+    header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.4px; }
+    .gentime { margin-top: 5px; font-size: 12px; color: #999; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 0.5px solid #e0e0dc;
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .stat-card .lbl { font-size: 11px; color: #999; margin-bottom: 6px; }
+    .stat-card .val { font-size: 30px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+    .stat-card .unit { font-size: 13px; color: #888; margin-left: 2px; font-weight: 400; }
+
+    /* ── Section heading ── */
+    .sec-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 18px;
+    }
+
+    /* ── Flow diagram ── */
+    .flow-section { border-top: 1px solid #e8e8e4; padding-top: 32px; margin-bottom: 36px; }
+    .flow-wrap { position: relative; }
+
+    .flow-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-col { padding: 0 12px; }
+    .flow-col:first-child { padding-left: 0; }
+    .flow-col:last-child  { padding-right: 0; }
+
+    .col-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+    }
+
+    .src-group { margin-bottom: 18px; }
+
+    .src-box {
+      background: #fff;
+      border: 0.5px solid #d8d8d4;
+      border-radius: 7px;
+      padding: 7px 10px;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+    .src-box .sname { font-weight: 600; color: #444; }
+    .src-box .stitle {
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cls-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+    }
+    .cls-box .cls-name { font-weight: 700; font-size: 13px; }
+    .cls-box .cls-desc { font-size: 11px; margin-top: 3px; opacity: 0.75; }
+    .cls-box .cls-cnt  { font-size: 10px; margin-top: 5px; opacity: 0.55; }
+
+    .thm-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+    }
+    .thm-box .thm-name { font-weight: 700; font-size: 13px; }
+
+    .flow-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Must reads ── */
+    .mustreads-section { border-top: 1px solid #e8e8e4; padding-top: 32px; margin-bottom: 36px; }
+
+    .mr-card {
+      background: #fff;
+      border: 0.5px solid #e0e0dc;
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+    }
+    .mr-num {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ebebeb;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      padding-top: 3px;
+    }
+    .mr-title {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      text-decoration: none;
+      margin-bottom: 9px;
+      line-height: 1.45;
+    }
+    .mr-title:hover { text-decoration: underline; }
+    .mr-why  { font-size: 12px; color: #666; margin-bottom: 5px; }
+    .mr-hook { font-size: 12px; color: #185FA5; margin-bottom: 10px; }
+    .mr-exp  {
+      font-size: 12px;
+      color: #777;
+      line-height: 1.75;
+      border-top: 1px solid #f0f0ec;
+      padding-top: 10px;
+    }
+
+    /* ── Cluster lists ── */
+    .clusters-section { border-top: 1px solid #e8e8e4; padding-top: 32px; }
+
+    .cg {
+      border: 0.5px solid #e0e0dc;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .cg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cg-header:hover { background: #fafaf8; }
+    .cg-header-left { display: flex; align-items: center; gap: 10px; }
+    .cg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cg-lbl { font-weight: 600; font-size: 14px; }
+    .cg-desc { font-size: 12px; color: #aaa; }
+    .cg-cnt  { font-size: 12px; color: #bbb; }
+    .cg-chevron { font-size: 10px; color: #bbb; transition: transform 0.18s; }
+    .cg-chevron.open { transform: rotate(180deg); }
+
+    .cg-body {
+      background: #fff;
+      padding: 0 18px 14px;
+    }
+
+    .art-card { border-top: 1px solid #f2f2ee; padding: 12px 0; }
+    .art-meta { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+    .badge-src {
+      font-size: 10px;
+      background: #f2f2ee;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #666;
+      font-weight: 500;
+    }
+    .badge-cat { font-size: 10px; color: #bbb; }
+    .art-title { font-size: 13px; font-weight: 600; color: #1a1a1a; line-height: 1.4; margin-bottom: 4px; }
+    .art-summary { font-size: 12px; color: #888; line-height: 1.65; margin-bottom: 6px; }
+    .art-footer { display: flex; align-items: center; justify-content: space-between; }
+    .art-link { font-size: 11px; color: #185FA5; text-decoration: none; }
+    .art-link:hover { text-decoration: underline; }
+    .art-date { font-size: 10px; color: #ccc; }
+    .art-exp {
+      font-size: 11px;
+      color: #777;
+      line-height: 1.7;
+      background: #f8f8f6;
+      border-radius: 6px;
+      padding: 9px 11px;
+      margin-top: 8px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 720px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .flow-cols  { grid-template-columns: 1fr; }
+      .flow-svg   { display: none; }
+      .mr-card    { grid-template-columns: 1fr; }
+      .mr-num     { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>오늘의 AI 리포트</h1>
+    <div class="gentime" id="js-gentime"></div>
+  </header>
+
+  <div class="stats-grid" id="js-stats"></div>
+
+  <section class="flow-section">
+    <div class="sec-title">오늘의 흐름</div>
+    <div class="flow-wrap" id="js-flow-wrap">
+      <svg class="flow-svg" id="js-flow-svg"></svg>
+      <div class="flow-cols" id="js-flow-cols"></div>
+    </div>
+  </section>
+
+  <section class="mustreads-section">
+    <div class="sec-title">오늘 꼭 읽어야 할 글</div>
+    <div id="js-mustreads"></div>
+  </section>
+
+  <section class="clusters-section">
+    <div class="sec-title">클러스터별 전체 글</div>
+    <div id="js-cluster-lists"></div>
+  </section>
+
+</div>
+
+<script>
+const DATA = __DATA__;
+
+const { articles, digest, generated_at, total, counts } = DATA;
+const { clusters, must_reads, explanations } = digest;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+
+document.getElementById('js-gentime').textContent = generated_at;
+
+// ── Stats ────────────────────────────────────────────────────────────────────
+
+document.getElementById('js-stats').innerHTML = [
+  { lbl: '전체 수집',  val: total,                  unit: '개' },
+  { lbl: '논문',       val: counts['논문']    || 0,  unit: '편' },
+  { lbl: '뉴스',       val: counts['뉴스']    || 0,  unit: '건' },
+  { lbl: '커뮤니티',  val: counts['커뮤니티'] || 0,  unit: '개' },
+].map(s => `
+  <div class="stat-card">
+    <div class="lbl">${s.lbl}</div>
+    <div class="val">${s.val}<span class="unit">${s.unit}</span></div>
+  </div>`).join('');
+
+// ── Flow diagram ─────────────────────────────────────────────────────────────
+
+function buildFlow() {
+  const colsEl = document.getElementById('js-flow-cols');
+
+  // col 1 – source groups (one group per cluster)
+  const col1 = document.createElement('div');
+  col1.className = 'flow-col';
+  col1.innerHTML = '<div class="col-label">소스</div>';
+
+  const srcGroupEls = clusters.map((c, ci) => {
+    const srcMap = {};
+    c.indices.forEach(i => {
+      const a = articles[i];
+      if (!a) return;
+      if (!srcMap[a.source]) srcMap[a.source] = a.title;
+    });
+
+    const g = document.createElement('div');
+    g.className = 'src-group';
+    g.dataset.ci = ci;
+
+    Object.entries(srcMap).forEach(([name, title]) => {
+      const box = document.createElement('div');
+      box.className = 'src-box';
+      box.innerHTML = `<div class="sname">${esc(name)}</div>
+        <div class="stitle">${esc(title.slice(0, 38))}${title.length > 38 ? '…' : ''}</div>`;
+      g.appendChild(box);
+    });
+
+    col1.appendChild(g);
+    return g;
+  });
+
+  // col 2 – cluster boxes
+  const col2 = document.createElement('div');
+  col2.className = 'flow-col';
+  col2.innerHTML = '<div class="col-label">클러스터</div>';
+
+  const clsBoxEls = clusters.map(c => {
+    const el = document.createElement('div');
+    el.className = 'cls-box';
+    el.style.cssText = `background:${c.bg};color:${c.textColor}`;
+    el.innerHTML = `<div class="cls-name">${esc(c.label)}</div>
+      <div class="cls-desc">${esc(c.desc)}</div>
+      <div class="cls-cnt">${c.indices.length}개 글</div>`;
+    col2.appendChild(el);
+    return el;
+  });
+
+  // col 3 – theme boxes
+  const col3 = document.createElement('div');
+  col3.className = 'flow-col';
+  col3.innerHTML = '<div class="col-label">테마</div>';
+
+  const thmBoxEls = clusters.map(c => {
+    const el = document.createElement('div');
+    el.className = 'thm-box';
+    el.style.cssText = `background:${c.themeBg};color:${c.themeColor}`;
+    el.innerHTML = `<div class="thm-name">${esc(c.theme)}</div>`;
+    col3.appendChild(el);
+    return el;
+  });
+
+  colsEl.appendChild(col1);
+  colsEl.appendChild(col2);
+  colsEl.appendChild(col3);
+
+  requestAnimationFrame(() => drawArrows(srcGroupEls, clsBoxEls, thmBoxEls));
+}
+
+function drawArrows(srcGroupEls, clsBoxEls, thmBoxEls) {
+  const svg   = document.getElementById('js-flow-svg');
+  const wrap  = document.getElementById('js-flow-wrap');
+  const wRect = wrap.getBoundingClientRect();
+  const W = wrap.offsetWidth;
+  const H = wrap.offsetHeight;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width',  W);
+  svg.setAttribute('height', H);
+  svg.style.height = H + 'px';
+
+  let d = '';
+
+  clusters.forEach((c, ci) => {
+    const sg  = srcGroupEls[ci];
+    const cb  = clsBoxEls[ci];
+    const tb  = thmBoxEls[ci];
+    if (!sg || !cb || !tb) return;
+
+    const cbR = cb.getBoundingClientRect();
+    const tbR = tb.getBoundingClientRect();
+    const clsL  = cbR.left  - wRect.left;
+    const clsR  = cbR.right - wRect.left;
+    const clsY  = cbR.top   - wRect.top  + cbR.height / 2;
+    const thmL  = tbR.left  - wRect.left;
+    const thmY  = tbR.top   - wRect.top  + tbR.height / 2;
+
+    // cluster → theme
+    const mx = (clsR + thmL) / 2;
+    d += `<path d="M${clsR},${clsY} C${mx},${clsY} ${mx},${thmY} ${thmL},${thmY}"
+      fill="none" stroke="${c.color}" stroke-width="1.5" stroke-opacity="0.4"/>`;
+
+    // source boxes → cluster
+    sg.querySelectorAll('.src-box').forEach(sb => {
+      const sbR = sb.getBoundingClientRect();
+      const sx = sbR.right - wRect.left;
+      const sy = sbR.top   - wRect.top  + sbR.height / 2;
+      const mx2 = (sx + clsL) / 2;
+      d += `<path d="M${sx},${sy} C${mx2},${sy} ${mx2},${clsY} ${clsL},${clsY}"
+        fill="none" stroke="#ccc" stroke-width="1" stroke-opacity="0.45"/>`;
+    });
+  });
+
+  svg.innerHTML = d;
+}
+
+buildFlow();
+
+window.addEventListener('resize', () => {
+  document.getElementById('js-flow-svg').innerHTML = '';
+  clearTimeout(window._rtime);
+  window._rtime = setTimeout(() => {
+    const sgs = [...document.querySelectorAll('#js-flow-cols .src-group')];
+    const cbs = [...document.querySelectorAll('#js-flow-cols .cls-box')];
+    const tbs = [...document.querySelectorAll('#js-flow-cols .thm-box')];
+    drawArrows(sgs, cbs, tbs);
+  }, 80);
+});
+
+// ── Must reads ───────────────────────────────────────────────────────────────
+
+const mrEl = document.getElementById('js-mustreads');
+must_reads.forEach((mr, i) => {
+  const a   = articles[mr.index];
+  if (!a) return;
+  const exp = (explanations || {})[String(mr.index)] || '';
+  mrEl.innerHTML += `
+    <div class="mr-card">
+      <div class="mr-num">0${i + 1}</div>
+      <div>
+        <a href="${esc(a.url)}" target="_blank" rel="noopener" class="mr-title">${esc(a.title)}</a>
+        <div class="mr-why">📌 ${esc(mr.why)}</div>
+        <div class="mr-hook">↗ ${esc(mr.hook)}</div>
+        ${exp ? `<div class="mr-exp">${esc(exp)}</div>` : ''}
+      </div>
+    </div>`;
+});
+
+// ── Cluster lists ─────────────────────────────────────────────────────────────
+
+const clListEl = document.getElementById('js-cluster-lists');
+const clusteredIdx = new Set(clusters.flatMap(c => c.indices));
+
+clusters.forEach((c, ci) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'cg';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'cg-header';
+  hdr.innerHTML = `
+    <div class="cg-header-left">
+      <div class="cg-dot" style="background:${c.color}"></div>
+      <span class="cg-lbl">${esc(c.label)}</span>
+      <span class="cg-desc">— ${esc(c.desc)}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="cg-cnt">${c.indices.length}개</span>
+      <span class="cg-chevron open" id="chev-${ci}">▼</span>
+    </div>`;
+
+  const body = document.createElement('div');
+  body.className = 'cg-body';
+  body.id = `cgb-${ci}`;
+
+  c.indices.forEach(idx => {
+    const a   = articles[idx];
+    if (!a) return;
+    const exp = (explanations || {})[String(idx)] || '';
+    body.innerHTML += `
+      <div class="art-card">
+        <div class="art-meta">
+          <span class="badge-src">${esc(a.source)}</span>
+          <span class="badge-cat">${esc(a.cat)}</span>
+        </div>
+        <div class="art-title">${esc(a.title)}</div>
+        ${a.summary ? `<div class="art-summary">${esc(a.summary)}</div>` : ''}
+        <div class="art-footer">
+          <a href="${esc(a.url)}" target="_blank" rel="noopener" class="art-link">원문 보기 →</a>
+          ${a.date ? `<span class="art-date">${esc(a.date)}</span>` : ''}
+        </div>
+        ${exp ? `<div class="art-exp">${esc(exp)}</div>` : ''}
+      </div>`;
+  });
+
+  hdr.addEventListener('click', () => {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    const chev = document.getElementById(`chev-${ci}`);
+    chev.textContent = open ? '▶' : '▼';
+    chev.classList.toggle('open', !open);
+  });
+
+  wrap.appendChild(hdr);
+  wrap.appendChild(body);
+  clListEl.appendChild(wrap);
+});
+
+// 미분류 글
+const others = articles.filter((_, i) => !clusteredIdx.has(i));
+if (others.length) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cg';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'cg-header';
+  hdr.innerHTML = `
+    <div class="cg-header-left">
+      <div class="cg-dot" style="background:#ccc"></div>
+      <span class="cg-lbl">기타</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="cg-cnt">${others.length}개</span>
+      <span class="cg-chevron" id="chev-other">▶</span>
+    </div>`;
+
+  const body = document.createElement('div');
+  body.className = 'cg-body';
+  body.style.display = 'none';
+
+  others.forEach(a => {
+    body.innerHTML += `
+      <div class="art-card">
+        <div class="art-meta">
+          <span class="badge-src">${esc(a.source)}</span>
+          <span class="badge-cat">${esc(a.cat)}</span>
+        </div>
+        <div class="art-title">${esc(a.title)}</div>
+        ${a.summary ? `<div class="art-summary">${esc(a.summary)}</div>` : ''}
+        <div class="art-footer">
+          <a href="${esc(a.url)}" target="_blank" rel="noopener" class="art-link">원문 보기 →</a>
+          ${a.date ? `<span class="art-date">${esc(a.date)}</span>` : ''}
+        </div>
+      </div>`;
+  });
+
+  hdr.addEventListener('click', () => {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    const chev = document.getElementById('chev-other');
+    chev.textContent = open ? '▶' : '▼';
+    chev.classList.toggle('open', !open);
+  });
+
+  wrap.appendChild(hdr);
+  wrap.appendChild(body);
+  clListEl.appendChild(wrap);
+}
+</script>
+</body>
+</html>
