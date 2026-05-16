@@ -7,16 +7,46 @@ from supabase import create_client
 
 ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
 
+_BROWSER_UA = (
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+)
+_GOOGLEBOT_UA = 'Googlebot/2.1 (+http://www.google.com/bot.html)'
+
+def _extract(html):
+    return trafilatura.extract(
+        html, include_comments=False, include_tables=False,
+        favor_recall=True, no_fallback=False,
+    )
+
 def fetch_content(url):
+    # 전략 1: Google 리퍼러 + 브라우저 UA (soft paywall 대부분 통과)
+    for ua, ref in [
+        (_BROWSER_UA,   'https://www.google.com/'),
+        (_GOOGLEBOT_UA, ''),
+    ]:
+        try:
+            headers = {'User-Agent': ua, 'Accept-Language': 'en-US,en;q=0.9'}
+            if ref:
+                headers['Referer'] = ref
+            resp = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
+            if resp.ok and len(resp.text) > 500:
+                text = _extract(resp.text)
+                if text and len(text) > 200:
+                    return text[:5000]
+        except Exception:
+            pass
+
+    # 전략 2: trafilatura 기본 fetcher
     try:
         html = trafilatura.fetch_url(url)
         if html:
-            text = trafilatura.extract(html, include_comments=False, include_tables=False,
-                                       no_fallback=False)
+            text = _extract(html)
             if text:
-                return text[:4000]
+                return text[:5000]
     except Exception:
         pass
+
     return None
 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -59,7 +89,7 @@ def fetch_articles(max_per_feed=5):
         try:
             parsed = feedparser.parse(feed['url'])
             for entry in parsed.entries[:max_per_feed]:
-                summary = (entry.get('summary') or entry.get('description') or '')[:300]
+                summary = (entry.get('summary') or entry.get('description') or '')[:600]
                 pub = ''
                 if entry.get('published_parsed'):
                     import time as _t
