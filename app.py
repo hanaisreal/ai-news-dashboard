@@ -71,7 +71,7 @@ if 'date' in st.query_params and st.session_state.sel_date is None:
 
 # ── Dialogs ───────────────────────────────────────────────────────────────────
 
-@st.dialog("💾 폴더에 저장")
+@st.experimental_dialog("💾 폴더에 저장")
 def dlg_save_article(article):
     folders = get_folders()
     sel = st.selectbox("폴더 선택", [f['name'] for f in folders])
@@ -89,7 +89,7 @@ def dlg_save_article(article):
         get_bookmarks.clear()
         st.rerun()
 
-@st.dialog("📌 리포트 저장")
+@st.experimental_dialog("📌 리포트 저장")
 def dlg_save_report(report):
     folders = get_folders()
     sel = st.selectbox("폴더 선택", [f['name'] for f in folders])
@@ -104,7 +104,7 @@ def dlg_save_report(report):
         get_bookmarks.clear()
         st.rerun()
 
-@st.dialog("📁 새 폴더 만들기")
+@st.experimental_dialog("📁 새 폴더 만들기")
 def dlg_new_folder():
     name = st.text_input("폴더 이름")
     color = st.color_picker("색상", "#185FA5")
