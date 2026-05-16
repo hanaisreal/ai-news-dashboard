@@ -7,183 +7,198 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     :root {
-      --bg: #f5f5f3;
-      --surface: #ffffff;
-      --border: #e8e8e4;
-      --text: #1a1a1a;
-      --text2: #555;
-      --text3: #999;
-      --accent: #185FA5;
-      --accent-bg: #EBF2FB;
-      --sidebar-w: 210px;
-      --header-h: 50px;
+      --bg:      #f5f5f3;
+      --sur:     #ffffff;
+      --bdr:     #e8e8e4;
+      --t1:      #1a1a1a;
+      --t2:      #555;
+      --t3:      #999;
+      --ac:      #185FA5;
+      --ac-bg:   #EBF2FB;
+      --sw:      210px;
+      --hh:      50px;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
     html, body { height: 100%; overflow: hidden; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--t1);
+    }
 
-    /* ── Header ── */
+    /* ── Header ─────────────────────────────────────────────────────── */
     .hdr {
-      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; padding: 0 14px; gap: 8px; z-index: 500;
+      position: fixed; top: 0; left: 0; right: 0; height: var(--hh);
+      background: var(--sur); border-bottom: 1px solid var(--bdr);
+      display: flex; align-items: center; padding: 0 12px; gap: 6px; z-index: 500;
     }
-    .hdr-title { font-weight: 700; font-size: 15px; flex: 1; }
-    .hdr-btn {
+    .hdr-title { font-weight: 700; font-size: 15px; flex: 1; user-select: none; }
+    .hbtn {
       background: none; border: none; cursor: pointer;
-      padding: 5px 9px; border-radius: 6px; font-size: 12px; color: var(--text2);
-      white-space: nowrap;
+      padding: 5px 9px; border-radius: 6px; font-size: 12px; color: var(--t2);
+      white-space: nowrap; user-select: none;
     }
-    .hdr-btn:hover { background: var(--bg); }
-    .hdr-btn.on { color: var(--accent); font-weight: 600; background: var(--accent-bg); }
-    .menu-btn { font-size: 18px; display: none; }
+    .hbtn:active { background: var(--bg); }
+    .hbtn.on { color: var(--ac); font-weight: 600; background: var(--ac-bg); }
+    #menu-btn { font-size: 18px; display: none; }
 
-    /* ── Layout ── */
+    /* ── Layout ─────────────────────────────────────────────────────── */
     .layout {
-      display: flex; position: fixed;
-      top: var(--header-h); left: 0; right: 0; bottom: 0;
+      position: fixed; top: var(--hh); left: 0; right: 0; bottom: 0;
+      display: flex;
     }
 
-    /* ── Sidebar ── */
+    /* ── Sidebar ─────────────────────────────────────────────────────── */
     .sidebar {
-      width: var(--sidebar-w); background: var(--surface);
-      border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0;
-      transition: transform 0.25s ease;
+      width: var(--sw); background: var(--sur);
+      border-right: 1px solid var(--bdr); overflow-y: auto;
+      flex-shrink: 0; transition: transform 0.24s ease;
     }
-    .sidebar-sec { padding: 14px 0 6px; }
-    .sidebar-label {
-      font-size: 10px; font-weight: 700; color: var(--text3);
+    .sb-sec { padding: 14px 0 6px; }
+    .sb-lbl {
+      font-size: 10px; font-weight: 700; color: var(--t3);
       text-transform: uppercase; letter-spacing: 0.7px;
-      padding: 0 14px 8px;
+      padding: 0 14px 8px; user-select: none;
     }
     .tag {
       display: flex; align-items: center; gap: 8px;
       padding: 9px 14px; cursor: pointer; font-size: 13px;
-      transition: background 0.1s;
+      user-select: none;
     }
-    .tag:hover { background: var(--bg); }
-    .tag.on { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
-    .tag-name { flex: 1; }
-    .tag-cnt {
-      font-size: 11px; color: var(--text3);
-      background: var(--bg); border-radius: 10px; padding: 1px 7px;
-      min-width: 24px; text-align: center;
+    .tag:active { background: var(--bg); }
+    .tag.on { background: var(--ac-bg); color: var(--ac); font-weight: 600; }
+    .tag-n { flex: 1; }
+    .tag-c {
+      font-size: 11px; color: var(--t3); background: var(--bg);
+      border-radius: 10px; padding: 1px 7px; min-width: 24px; text-align: center;
     }
-    .tag.on .tag-cnt { background: #D0E4F7; color: var(--accent); }
+    .tag.on .tag-c { background: #D0E4F7; color: var(--ac); }
 
-    /* ── Article list ── */
-    .list { flex: 1; overflow-y: auto; }
+    /* ── Article list ────────────────────────────────────────────────── */
+    .list { flex: 1; overflow-y: auto; overflow-x: hidden; }
     .list-inner { padding: 8px; }
 
+    /* card */
     .card {
-      background: var(--surface); border-radius: 10px; margin-bottom: 6px;
-      border: 0.5px solid var(--border); overflow: hidden; position: relative;
-      cursor: pointer; transform: translateX(0); will-change: transform;
-      transition: box-shadow 0.15s;
+      background: var(--sur); border-radius: 10px; margin-bottom: 6px;
+      border: 0.5px solid var(--bdr); overflow: hidden; position: relative;
+      /* no cursor:pointer — touch handles it */
+      will-change: transform;
     }
-    .card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
-    .card.read { opacity: 0.45; }
-    .card.sliding { transition: none; }
+    .card.read { opacity: 0.4; }
 
-    .swipe-l, .swipe-r {
-      position: absolute; top: 0; bottom: 0;
-      display: flex; align-items: center; padding: 0 18px;
-      font-size: 18px; opacity: 0; pointer-events: none;
-      transition: opacity 0.1s;
+    /* swipe left reveal */
+    .sw-l {
+      position: absolute; top: 0; left: 0; bottom: 0; width: 80px;
+      background: #FEF2F2; display: flex; align-items: center;
+      justify-content: center; font-size: 20px; opacity: 0; pointer-events: none;
     }
-    .swipe-l { left: 0; background: #FEF2F2; right: auto; width: 70px; }
-    .swipe-r { right: 0; background: #F0FDF4; left: auto; width: 70px; justify-content: flex-end; }
 
-    .card-inner { padding: 11px 13px; }
-    .card-meta { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
-    .udot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+    .card-in { padding: 11px 13px; }
+    .cmeta {
+      display: flex; align-items: center; gap: 5px; margin-bottom: 5px;
+    }
+    .udot {
+      width: 6px; height: 6px; background: var(--ac);
+      border-radius: 50%; flex-shrink: 0;
+    }
     .card.read .udot { display: none; }
-    .card-src { font-size: 11px; font-weight: 600; color: var(--accent); }
-    .card-tag { font-size: 10px; color: var(--text3); }
-    .card-time { font-size: 10px; color: var(--text3); margin-left: auto; }
-    .card-title {
+    .csrc { font-size: 11px; font-weight: 600; color: var(--ac); }
+    .ctag { font-size: 10px; color: var(--t3); }
+    .ctime { font-size: 10px; color: var(--t3); margin-left: auto; }
+    .ctitle {
       font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 4px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .card.read .card-title { font-weight: 400; color: var(--text2); }
-    .card-sum {
-      font-size: 12px; color: var(--text2); line-height: 1.5;
+    .card.read .ctitle { font-weight: 400; color: var(--t2); }
+    .csum {
+      font-size: 12px; color: var(--t2); line-height: 1.5;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
 
-    /* ── Reading panel ── */
+    /* ── Reading panel ───────────────────────────────────────────────── */
     .panel {
       position: fixed; top: 0; right: 0; bottom: 0; width: 560px;
-      background: var(--surface); border-left: 1px solid var(--border);
-      transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      background: var(--sur); border-left: 1px solid var(--bdr);
+      transform: translateX(100%);
+      transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 400; display: flex; flex-direction: column;
-      box-shadow: -6px 0 24px rgba(0,0,0,0.07);
+      box-shadow: -4px 0 20px rgba(0,0,0,0.07);
     }
     .panel.open { transform: translateX(0); }
 
-    .panel-hdr {
-      height: var(--header-h); display: flex; align-items: center;
-      gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    .phdr {
+      height: var(--hh); display: flex; align-items: center;
+      gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--bdr);
+      flex-shrink: 0;
     }
-    .back-btn {
+    .pback {
       background: none; border: none; cursor: pointer;
-      font-size: 22px; color: var(--text2); padding: 2px 6px; border-radius: 6px;
+      font-size: 22px; color: var(--t2); padding: 2px 8px;
+      border-radius: 6px; user-select: none;
     }
-    .back-btn:hover { background: var(--bg); }
-    .panel-src { font-size: 12px; color: var(--text3); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pback:active { background: var(--bg); }
+    .psrc { font-size: 12px; color: var(--t3); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .pbtn {
       display: flex; align-items: center; gap: 4px;
-      padding: 6px 11px; border-radius: 7px; border: none;
+      padding: 6px 10px; border-radius: 7px; border: none;
       cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap;
+      user-select: none;
     }
-    .pbtn-save { background: var(--bg); color: var(--text2); border: 0.5px solid var(--border); }
-    .pbtn-save:hover { background: #ebebeb; }
-    .pbtn-claude { background: #7C3AED; color: #fff; }
-    .pbtn-claude:hover { background: #6D28D9; }
+    .pbtn-s { background: var(--bg); color: var(--t2); border: 0.5px solid var(--bdr); }
+    .pbtn-s:active { background: #e8e8e4; }
+    .pbtn-c { background: #7C3AED; color: #fff; }
+    .pbtn-c:active { background: #6D28D9; }
 
-    .panel-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
-    .panel-title { font-size: 19px; font-weight: 700; line-height: 1.4; letter-spacing: -0.3px; margin-bottom: 12px; }
-    .panel-sum { font-size: 15px; color: var(--text2); line-height: 1.8; }
+    .pbody { flex: 1; overflow-y: auto; padding: 20px 22px; }
+    .ptitle { font-size: 19px; font-weight: 700; line-height: 1.4; letter-spacing: -0.3px; margin-bottom: 12px; }
+    .psum { font-size: 15px; color: var(--t2); line-height: 1.8; }
 
-    .panel-ftr {
-      padding: 12px 20px; border-top: 1px solid var(--border);
+    .pftr {
+      padding: 12px 18px; border-top: 1px solid var(--bdr);
       display: flex; align-items: center; gap: 8px; flex-shrink: 0;
     }
-    .read-btn {
-      background: none; border: 0.5px solid var(--border);
-      border-radius: 7px; padding: 6px 12px; font-size: 12px; cursor: pointer; color: var(--text2);
+    .rbtn {
+      background: none; border: 0.5px solid var(--bdr);
+      border-radius: 7px; padding: 6px 12px; font-size: 12px;
+      cursor: pointer; color: var(--t2); user-select: none;
     }
-    .read-btn:hover { background: var(--bg); }
-    .read-btn.done { color: #16A34A; border-color: #16A34A; background: #F0FDF4; }
-    .orig-a { margin-left: auto; font-size: 12px; color: var(--accent); text-decoration: none; }
-    .orig-a:hover { text-decoration: underline; }
+    .rbtn:active { background: var(--bg); }
+    .rbtn.done { color: #16A34A; border-color: #16A34A; background: #F0FDF4; }
+    .orig { margin-left: auto; font-size: 12px; color: var(--ac); text-decoration: none; }
+    .orig:hover { text-decoration: underline; }
 
-    /* ── Toast ── */
+    /* ── Toast ──────────────────────────────────────────────────────── */
     .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: #1a1a1a; color: #fff; padding: 10px 18px; border-radius: 8px;
-      font-size: 13px; z-index: 1000; opacity: 0; transition: all 0.25s; pointer-events: none;
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #111; color: #fff; padding: 9px 16px;
+      border-radius: 8px; font-size: 13px; z-index: 9000;
+      opacity: 0; transition: opacity 0.22s, transform 0.22s;
+      pointer-events: none; white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Overlay ── */
+    /* ── Overlay ─────────────────────────────────────────────────────── */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.35); z-index: 350;
-      opacity: 0; transition: opacity 0.25s;
+      background: rgba(0,0,0,0.32); z-index: 350;
+      opacity: 0; transition: opacity 0.22s;
     }
     .overlay.vis { opacity: 1; }
 
-    /* ── Empty / Loading ── */
-    .empty { padding: 60px 20px; text-align: center; color: var(--text3); font-size: 14px; }
-    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    /* ── States ─────────────────────────────────────────────────────── */
+    .state { padding: 60px 20px; text-align: center; color: var(--t3); font-size: 14px; }
+    .state-icon { font-size: 36px; margin-bottom: 10px; }
 
-    /* ── Mobile ── */
-    @media (max-width: 720px) {
-      .menu-btn { display: flex !important; }
+    /* ── Mobile ─────────────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      #menu-btn { display: flex !important; }
       .sidebar {
-        position: fixed; top: 0; left: 0; bottom: 0; z-index: 450;
+        position: fixed; top: 0; left: 0; bottom: 0; z-index: 460;
         transform: translateX(-100%);
       }
       .sidebar.open { transform: translateX(0); }
@@ -195,54 +210,54 @@
 <body>
 
 <div class="hdr">
-  <button class="hdr-btn menu-btn" id="menu-btn" onclick="toggleSidebar()">☰</button>
+  <button class="hbtn" id="menu-btn" onclick="toggleSb()">☰</button>
   <div class="hdr-title">📰 AI 뉴스</div>
-  <button class="hdr-btn on"  id="f-all"    onclick="setFilter('all')">전체</button>
-  <button class="hdr-btn"     id="f-unread" onclick="setFilter('unread')">안읽음</button>
-  <button class="hdr-btn"     id="f-today"  onclick="setFilter('today')">오늘</button>
+  <button class="hbtn on"  id="f-all"    onclick="setF('all')">전체</button>
+  <button class="hbtn"     id="f-unread" onclick="setF('unread')">안읽음</button>
+  <button class="hbtn"     id="f-today"  onclick="setF('today')">오늘</button>
 </div>
 
 <div class="layout">
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-sec">
-      <div class="sidebar-label">태그</div>
+  <div class="sidebar" id="sb">
+    <div class="sb-sec">
+      <div class="sb-lbl">태그</div>
       <div id="tag-list">
-        <div class="tag on" onclick="selectTag(null)">
-          <span class="tag-name">전체</span>
-          <span class="tag-cnt" id="cnt-all">…</span>
+        <div class="tag on" onclick="selTag(null)">
+          <span class="tag-n">전체</span>
+          <span class="tag-c" id="c-all">…</span>
         </div>
       </div>
     </div>
   </div>
 
   <div class="list" id="list">
-    <div class="empty"><div class="empty-icon">⏳</div>불러오는 중…</div>
+    <div class="state"><div class="state-icon">⏳</div>불러오는 중…</div>
   </div>
 </div>
 
 <div class="overlay" id="overlay" onclick="closeAll()"></div>
 
 <div class="panel" id="panel">
-  <div class="panel-hdr">
-    <button class="back-btn" onclick="closePanel()">←</button>
-    <span class="panel-src" id="p-src"></span>
-    <button class="pbtn pbtn-save" id="p-save" onclick="saveArticle()">💾 저장</button>
-    <button class="pbtn pbtn-claude" onclick="openClaude()">💬 Claude</button>
+  <div class="phdr">
+    <button class="pback" onclick="closePanel()">←</button>
+    <span class="psrc" id="p-src"></span>
+    <button class="pbtn pbtn-s" id="p-save" onclick="saveArt()">💾 저장</button>
+    <button class="pbtn pbtn-c" onclick="openClaude()">💬 Claude</button>
   </div>
-  <div class="panel-body">
-    <div class="panel-title" id="p-title"></div>
-    <div class="panel-sum"   id="p-sum"></div>
+  <div class="pbody">
+    <div class="ptitle" id="p-title"></div>
+    <div class="psum"   id="p-sum"></div>
   </div>
-  <div class="panel-ftr">
-    <button class="read-btn" id="p-read" onclick="toggleRead()">✓ 읽음 표시</button>
-    <a class="orig-a" id="p-link" target="_blank" rel="noopener">원문 보기 →</a>
+  <div class="pftr">
+    <button class="rbtn" id="p-rbtn" onclick="toggleRead()">✓ 읽음 표시</button>
+    <a class="orig" id="p-link" target="_blank" rel="noopener">원문 보기 →</a>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Supabase init ─────────────────────────────────────────────────────────────
+// ── Supabase ──────────────────────────────────────────────────────────────────
 const { createClient } = window.supabase;
 const sb = createClient(
   'https://yosnuhgjwecgsfyodopv.supabase.co',
@@ -250,7 +265,7 @@ const sb = createClient(
 );
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let articles  = [];
+let arts      = [];
 let readIds   = new Set(JSON.parse(localStorage.getItem('read') || '[]'));
 let curTag    = null;
 let curFilter = 'all';
@@ -265,17 +280,21 @@ const today   = new Date().toISOString().slice(0, 10);
     .order('published_at', { ascending: false })
     .limit(300);
 
-  if (error) { document.getElementById('list').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>데이터 로드 실패</div>`; return; }
+  if (error || !data) {
+    document.getElementById('list').innerHTML =
+      `<div class="state"><div class="state-icon">⚠️</div>데이터 로드 실패</div>`;
+    return;
+  }
 
-  articles = (data || []).map(a => ({
-    id:    a.id,
-    title: a.title,
-    url:   a.url,
-    sum:   a.summary || '',
-    src:   a.feeds?.name || '알 수 없음',
-    tag:   a.feeds?.tag  || '기타',
-    pub:   a.published_at,
-    date:  a.date,
+  arts = data.map(a => ({
+    id:  a.id,
+    ttl: a.title,
+    url: a.url,
+    sum: a.summary || '',
+    src: a.feeds?.name || '알 수 없음',
+    tag: a.feeds?.tag  || '기타',
+    pub: a.published_at,
+    dt:  a.date,
   }));
 
   renderTags();
@@ -285,261 +304,279 @@ const today   = new Date().toISOString().slice(0, 10);
 // ── Tags ──────────────────────────────────────────────────────────────────────
 function renderTags() {
   const counts = {};
-  articles.forEach(a => counts[a.tag] = (counts[a.tag] || 0) + 1);
-  document.getElementById('cnt-all').textContent = articles.length;
+  arts.forEach(a => counts[a.tag] = (counts[a.tag] || 0) + 1);
+  document.getElementById('c-all').textContent = arts.length;
 
-  const list = document.getElementById('tag-list');
-  list.querySelectorAll('[data-dyn]').forEach(el => el.remove());
+  const tl = document.getElementById('tag-list');
+  tl.querySelectorAll('[data-d]').forEach(el => el.remove());
 
-  Object.entries(counts).sort(([a],[b]) => a.localeCompare(b)).forEach(([tag, cnt]) => {
+  Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)).forEach(([tag, n]) => {
     const el = document.createElement('div');
     el.className = 'tag' + (curTag === tag ? ' on' : '');
-    el.dataset.dyn = '1';
-    el.onclick = () => selectTag(tag);
-    el.innerHTML = `<span class="tag-name">${x(tag)}</span><span class="tag-cnt">${cnt}</span>`;
-    list.appendChild(el);
+    el.dataset.d = '1';
+    el.innerHTML = `<span class="tag-n">${esc(tag)}</span><span class="tag-c">${n}</span>`;
+    el.addEventListener('click', () => selTag(tag));
+    tl.appendChild(el);
   });
 }
 
-function selectTag(tag) {
+function selTag(tag) {
   curTag = tag;
   document.querySelectorAll('.tag').forEach(el => el.classList.remove('on'));
   if (tag === null) document.querySelector('.tag').classList.add('on');
-  else document.querySelectorAll('[data-dyn]').forEach(el => {
-    if (el.querySelector('.tag-name').textContent === tag) el.classList.add('on');
+  else document.querySelectorAll('[data-d]').forEach(el => {
+    if (el.querySelector('.tag-n').textContent === tag) el.classList.add('on');
   });
   renderList();
-  if (window.innerWidth <= 720) closeSidebar();
+  if (window.innerWidth <= 700) closeSb();
 }
 
 // ── Filter ────────────────────────────────────────────────────────────────────
-function setFilter(f) {
+function setF(f) {
   curFilter = f;
-  ['all','unread','today'].forEach(k =>
+  ['all', 'unread', 'today'].forEach(k =>
     document.getElementById('f-' + k).classList.toggle('on', k === f));
   renderList();
 }
 
-function filtered() {
-  let arts = articles;
-  if (curTag)            arts = arts.filter(a => a.tag === curTag);
-  if (curFilter==='unread') arts = arts.filter(a => !readIds.has(a.id));
-  if (curFilter==='today')  arts = arts.filter(a => a.date === today);
-  return arts;
+function getArts() {
+  let a = arts;
+  if (curTag)              a = a.filter(x => x.tag === curTag);
+  if (curFilter==='unread') a = a.filter(x => !readIds.has(x.id));
+  if (curFilter==='today')  a = a.filter(x => x.dt === today);
+  return a;
 }
 
 // ── Render list ───────────────────────────────────────────────────────────────
 function renderList() {
   const list = document.getElementById('list');
-  const arts = filtered();
-  if (!arts.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>아티클이 없어요</div>`;
+  const filtered = getArts();
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="state"><div class="state-icon">📭</div>아티클이 없어요</div>`;
     return;
   }
+
   list.innerHTML = '<div class="list-inner" id="inner"></div>';
-  arts.forEach(a => document.getElementById('inner').appendChild(makeCard(a)));
+  const inner = document.getElementById('inner');
+  filtered.forEach(a => inner.appendChild(mkCard(a)));
 }
 
-function makeCard(a) {
+function mkCard(a) {
   const card = document.createElement('div');
   card.className = 'card' + (readIds.has(a.id) ? ' read' : '');
   card.dataset.id = a.id;
   card.innerHTML = `
-    <div class="swipe-l">📭</div>
-    <div class="swipe-r">📖</div>
-    <div class="card-inner">
-      <div class="card-meta">
+    <div class="sw-l">📭</div>
+    <div class="card-in">
+      <div class="cmeta">
         <div class="udot"></div>
-        <span class="card-src">${x(a.src)}</span>
-        <span class="card-tag">${x(a.tag)}</span>
-        <span class="card-time">${relTime(a.pub)}</span>
+        <span class="csrc">${esc(a.src)}</span>
+        <span class="ctag">${esc(a.tag)}</span>
+        <span class="ctime">${relT(a.pub)}</span>
       </div>
-      <div class="card-title">${x(a.title)}</div>
-      ${a.sum ? `<div class="card-sum">${x(a.sum.slice(0,120))}</div>` : ''}
+      <div class="ctitle">${esc(a.ttl)}</div>
+      ${a.sum ? `<div class="csum">${esc(a.sum.slice(0, 120))}</div>` : ''}
     </div>`;
-  card.addEventListener('click', () => openPanel(a));
-  addSwipe(card, a);
+
+  addTouch(card, a);
   return card;
 }
 
-// ── Swipe ─────────────────────────────────────────────────────────────────────
-function addSwipe(card, a) {
-  let sx, sy, dragging = false;
+// ── Touch handler (tap + swipe left) ─────────────────────────────────────────
+function addTouch(card, a) {
+  let sx, sy, dir = null; // dir: 'h' | 'v' | null
+
+  function reset() {
+    card.style.transform = '';
+    const sl = card.querySelector('.sw-l');
+    if (sl) sl.style.opacity = '0';
+    dir = null;
+  }
 
   card.addEventListener('touchstart', e => {
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY; dragging = false;
-    card.classList.add('sliding');
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    dir = null;
   }, { passive: true });
 
   card.addEventListener('touchmove', e => {
-    if (!sx) return;
+    if (sx === undefined) return;
     const dx = e.touches[0].clientX - sx;
     const dy = e.touches[0].clientY - sy;
-    if (!dragging && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) dragging = true;
-    if (!dragging) return;
-    e.preventDefault();
-    card.style.transform = `translateX(${dx}px)`;
-    card.querySelector('.swipe-l').style.opacity = dx < -20 ? Math.min(1, (-dx-20)/50) : 0;
-    card.querySelector('.swipe-r').style.opacity = dx >  20 ? Math.min(1, (dx-20)/50)  : 0;
+
+    // Direction not yet decided
+    if (!dir) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      dir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v';
+    }
+    if (dir === 'v') { reset(); return; }
+
+    // Horizontal — only left swipe, and not from iOS back edge
+    if (dx >= 0 || sx < 30) return;
+
+    e.preventDefault(); // prevent page scroll during horizontal swipe
+    const clamped = Math.max(dx, -100);
+    card.style.transform = `translateX(${clamped}px)`;
+    const sl = card.querySelector('.sw-l');
+    if (sl) sl.style.opacity = String(Math.min(1, (-dx - 20) / 50));
   }, { passive: false });
 
   card.addEventListener('touchend', e => {
-    if (!sx) return;
+    if (sx === undefined) return;
     const dx = e.changedTouches[0].clientX - sx;
-    card.classList.remove('sliding');
-    card.style.transform = '';
-    card.querySelector('.swipe-l').style.opacity = 0;
-    card.querySelector('.swipe-r').style.opacity = 0;
-    if (dragging) {
-      if (dx < -60) markRead(a.id, card, true);
-      else if (dx > 60) openPanel(a);
+    const dy = e.changedTouches[0].clientY - sy;
+
+    const isTap  = Math.abs(dx) < 8 && Math.abs(dy) < 8;
+    const isSwipeL = dir === 'h' && dx < -60 && sx >= 30;
+
+    reset();
+    sx = undefined;
+
+    if (isTap) {
+      e.preventDefault(); // suppress ghost click 300ms later
+      openPanel(a);
+    } else if (isSwipeL) {
+      markRead(a.id, card, true);
     }
-    sx = null; dragging = false;
-  }, { passive: true });
+  }, { passive: false });
+
+  // Desktop fallback (won't fire on mobile after e.preventDefault() above)
+  card.addEventListener('click', () => openPanel(a));
 }
 
-// ── Read state ────────────────────────────────────────────────────────────────
+// ── Read ──────────────────────────────────────────────────────────────────────
 function markRead(id, card, animate) {
   readIds.add(id);
-  localStorage.setItem('read', JSON.stringify([...readIds]));
+  save();
   if (!card) return;
   card.classList.add('read');
   if (animate && curFilter === 'unread') {
-    card.style.transition = 'opacity 0.25s, transform 0.25s';
-    card.style.opacity = '0'; card.style.transform = 'translateX(-100%)';
-    setTimeout(() => card.remove(), 260);
+    card.style.transition = 'opacity 0.22s, transform 0.22s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-100%)';
+    setTimeout(() => card.remove(), 240);
   }
 }
 
 function toggleRead() {
   if (!curArt) return;
   const id = curArt.id;
-  const btn = document.getElementById('p-read');
+  const btn = document.getElementById('p-rbtn');
+  const card = document.querySelector(`[data-id="${id}"]`);
   if (readIds.has(id)) {
-    readIds.delete(id);
+    readIds.delete(id); save();
     btn.textContent = '✓ 읽음 표시'; btn.classList.remove('done');
-    document.querySelector(`[data-id="${id}"]`)?.classList.remove('read');
+    card?.classList.remove('read');
   } else {
-    markRead(id, document.querySelector(`[data-id="${id}"]`), false);
+    readIds.add(id); save();
     btn.textContent = '✓ 읽음'; btn.classList.add('done');
+    card?.classList.add('read');
   }
 }
+
+function save() { localStorage.setItem('read', JSON.stringify([...readIds])); }
 
 // ── Panel ─────────────────────────────────────────────────────────────────────
 function openPanel(a) {
   curArt = a;
-  document.getElementById('p-src').textContent   = `${a.src} · ${a.tag}`;
-  document.getElementById('p-title').textContent = a.title;
+  document.getElementById('p-src').textContent   = `${a.src}  ·  ${a.tag}`;
+  document.getElementById('p-title').textContent = a.ttl;
   document.getElementById('p-sum').textContent   = a.sum || '요약 없음';
   document.getElementById('p-link').href         = a.url;
   document.getElementById('p-save').textContent  = '💾 저장';
 
-  const rb = document.getElementById('p-read');
-  const isRead = readIds.has(a.id);
-  rb.textContent = isRead ? '✓ 읽음' : '✓ 읽음 표시';
-  rb.classList.toggle('done', isRead);
+  const rb = document.getElementById('p-rbtn');
+  rb.textContent = readIds.has(a.id) ? '✓ 읽음' : '✓ 읽음 표시';
+  rb.classList.toggle('done', readIds.has(a.id));
 
   document.getElementById('panel').classList.add('open');
-  if (window.innerWidth <= 720) showOverlay();
+  if (window.innerWidth <= 700) showOv();
 
   // 2초 뒤 자동 읽음
   setTimeout(() => {
-    if (curArt?.id === a.id && !readIds.has(a.id)) {
-      markRead(a.id, document.querySelector(`[data-id="${a.id}"]`), false);
-      rb.textContent = '✓ 읽음'; rb.classList.add('done');
-    }
+    if (curArt?.id !== a.id || readIds.has(a.id)) return;
+    readIds.add(a.id); save();
+    document.querySelector(`[data-id="${a.id}"]`)?.classList.add('read');
+    rb.textContent = '✓ 읽음'; rb.classList.add('done');
   }, 2000);
 }
 
 function closePanel() {
   document.getElementById('panel').classList.remove('open');
-  hideOverlay();
-  curArt = null;
+  hideOv(); curArt = null;
 }
 
 // ── Claude ────────────────────────────────────────────────────────────────────
 function openClaude() {
   if (!curArt) return;
-
-  const ctx = articles.slice(0, 40)
-    .map(a => `• [${a.tag}] ${a.src}: ${a.title}`)
-    .join('\n');
-
-  const prompt =
-`다음 AI 뉴스 아티클을 같이 분석하고 싶어.
+  const ctx = arts.slice(0, 40).map(a => `• [${a.tag}] ${a.src}: ${a.ttl}`).join('\n');
+  const prompt = `다음 AI 뉴스 아티클을 같이 분석하고 싶어.
 
 ## 이 글
-제목: ${curArt.title}
+제목: ${curArt.ttl}
 출처: ${curArt.src} (${curArt.tag})
 내용: ${curArt.sum}
 링크: ${curArt.url}
 
-## 오늘의 전체 AI 뉴스 컨텍스트 (${articles.length}개 중 일부)
+## 오늘 전체 AI 뉴스 컨텍스트 (${arts.length}개 중 일부)
 ${ctx}
 
-이 글을 오늘의 전체 AI 트렌드 맥락에서 분석해줘. HCI·인간-AI 상호작용 연구 관점에서 어떤 의미가 있는지, 이 기술이 어디로 향하는지 이야기해줘.`;
+이 글을 오늘의 AI 트렌드 맥락에서 분석해줘. HCI·인간-AI 상호작용 연구 관점에서 어떤 의미인지, 이 기술이 어디로 향하는지도 이야기해줘.`;
 
-  // 클립보드에 복사 후 claude.ai 열기
-  navigator.clipboard.writeText(prompt).then(() => {
-    showToast('📋 프롬프트 복사됨 — Claude에 붙여넣기 하세요');
-  }).catch(() => {});
+  navigator.clipboard.writeText(prompt)
+    .then(() => showToast('📋 복사됨 — claude.ai에 붙여넣기 하세요'))
+    .catch(() => showToast('claude.ai에서 대화하세요'));
   window.open('https://claude.ai/new', '_blank');
 }
 
 // ── Save ──────────────────────────────────────────────────────────────────────
-async function saveArticle() {
+async function saveArt() {
   if (!curArt) return;
   const { data: folders } = await sb.from('folders').select('*').order('created_at');
-  if (!folders?.length) { showToast('Streamlit 앱에서 폴더를 먼저 만들어주세요'); return; }
-
-  const names = folders.map((f, i) => `${i+1}. ${f.name}`).join('\n');
-  const sel = prompt(`저장할 폴더를 선택하세요:\n${names}`);
+  if (!folders?.length) { showToast('Streamlit 앱에서 폴더를 먼저 만드세요'); return; }
+  const names = folders.map((f, i) => `${i + 1}. ${f.name}`).join('\n');
+  const sel = prompt(`저장할 폴더:\n${names}`);
   const idx = parseInt(sel) - 1;
   if (isNaN(idx) || idx < 0 || idx >= folders.length) return;
-
   await sb.from('bookmarks').upsert({
-    type: 'article', title: curArt.title,
-    url: curArt.url, source: curArt.src,
-    summary: curArt.sum?.slice(0, 300),
+    type: 'article', title: curArt.ttl, url: curArt.url,
+    source: curArt.src, summary: curArt.sum?.slice(0, 300),
     folder_id: folders[idx].id,
   }, { onConflict: 'url,folder_id', ignoreDuplicates: true });
-
   document.getElementById('p-save').textContent = '✓ 저장됨';
   showToast(`📁 ${folders[idx].name}에 저장됐어요`);
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('vis',
-    document.getElementById('sidebar').classList.contains('open'));
+function toggleSb() {
+  const s = document.getElementById('sb');
+  s.classList.toggle('open');
+  s.classList.contains('open') ? showOv() : hideOv();
 }
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  hideOverlay();
-}
-function showOverlay() { document.getElementById('overlay').classList.add('vis'); }
-function hideOverlay()  { document.getElementById('overlay').classList.remove('vis'); }
-function closeAll()     { closePanel(); closeSidebar(); }
+function closeSb()  { document.getElementById('sb').classList.remove('open'); hideOv(); }
+function showOv()   { document.getElementById('overlay').classList.add('vis'); }
+function hideOv()   { document.getElementById('overlay').classList.remove('vis'); }
+function closeAll() { closePanel(); closeSb(); }
 
-let toastTimer;
+let _tt;
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-function relTime(iso) {
+function relT(iso) {
   if (!iso) return '';
-  const diff = Math.floor((Date.now() - new Date(iso)) / 60000);
-  if (diff < 60)   return `${diff}분 전`;
-  if (diff < 1440) return `${Math.floor(diff/60)}시간 전`;
-  return `${Math.floor(diff/1440)}일 전`;
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (m < 60)   return `${m}분 전`;
+  if (m < 1440) return `${Math.floor(m / 60)}시간 전`;
+  return `${Math.floor(m / 1440)}일 전`;
 }
 
-function x(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 </script>
 </body>

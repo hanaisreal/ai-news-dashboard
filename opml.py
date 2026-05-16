@@ -15,8 +15,12 @@ from xml.etree import ElementTree as ET
 from supabase import create_client
 
 def parse_opml(path):
-    tree = ET.parse(path)
-    body = tree.getroot().find('body')
+    import re
+    content = open(path, encoding='utf-8').read()
+    # & in URLs가 &amp;로 이스케이프 안 된 경우 수정
+    content = re.sub(r'&(?!(amp|lt|gt|quot|apos);)', '&amp;', content)
+    root = ET.fromstring(content)
+    body = root.find('body')
     feeds = []
 
     def walk(node, parent_tag=None):
