@@ -208,8 +208,31 @@
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.32); z-index: 350;
       opacity: 0; transition: opacity 0.22s;
+      pointer-events: none; /* 비활성 시 터치 차단 안 함 */
     }
-    .overlay.vis { opacity: 1; }
+    .overlay.vis { opacity: 1; pointer-events: auto; }
+
+    /* ── Story ───────────────────────────────────────────────────────── */
+    .story-wrap {
+      margin: 8px 8px 0;
+      background: linear-gradient(135deg, #EBF2FB 0%, #F0EBF8 100%);
+      border: 0.5px solid #c8d8ee; border-radius: 12px; overflow: hidden;
+    }
+    .story-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 14px; cursor: pointer; user-select: none;
+    }
+    .story-hdr-left { display: flex; align-items: center; gap: 7px; }
+    .story-hdr-title { font-size: 13px; font-weight: 700; color: #185FA5; }
+    .story-hdr-sub { font-size: 11px; color: #7B9EC7; }
+    .story-chev { font-size: 11px; color: #7B9EC7; transition: transform 0.2s; }
+    .story-chev.open { transform: rotate(180deg); }
+    .story-body {
+      padding: 0 14px 14px; font-size: 14px; line-height: 1.85;
+      color: #2a2a2a; white-space: pre-wrap; word-break: break-word;
+      display: none;
+    }
+    .story-body.open { display: block; }
 
     /* ── States ─────────────────────────────────────────────────────── */
     .state { padding: 60px 20px; text-align: center; color: var(--t3); font-size: 14px; }
@@ -252,7 +275,19 @@
   </div>
 
   <div class="list" id="list">
-    <div class="state"><div class="state-icon">⏳</div>불러오는 중…</div>
+    <!-- 스토리 섹션 (데이터 로드 후 채워짐) -->
+    <div class="story-wrap" id="story-wrap" style="display:none">
+      <div class="story-hdr" onclick="toggleStory()">
+        <div class="story-hdr-left">
+          <span class="story-hdr-title">📖 오늘의 AI 브리핑</span>
+          <span class="story-hdr-sub" id="story-date"></span>
+        </div>
+        <span class="story-chev" id="story-chev">▼</span>
+      </div>
+      <div class="story-body" id="story-body"></div>
+    </div>
+
+    <div id="list-placeholder" class="state"><div class="state-icon">⏳</div>불러오는 중…</div>
   </div>
 </div>
 
@@ -323,7 +358,33 @@ const today   = new Date().toISOString().slice(0, 10);
 
   renderTags();
   renderList();
+  loadStory();
 })();
+
+async function loadStory() {
+  const { data } = await sb
+    .from('reports')
+    .select('story, generated_at')
+    .eq('date', today)
+    .maybeSingle();
+
+  if (!data?.story) return;
+
+  document.getElementById('story-body').textContent = data.story;
+  document.getElementById('story-date').textContent = data.generated_at || '';
+  document.getElementById('story-wrap').style.display = 'block';
+  // 첫 방문 시 자동으로 펼쳐서 보여주기
+  toggleStory(true);
+}
+
+function toggleStory(forceOpen) {
+  const body = document.getElementById('story-body');
+  const chev = document.getElementById('story-chev');
+  const isOpen = body.classList.contains('open');
+  const shouldOpen = forceOpen !== undefined ? forceOpen : !isOpen;
+  body.classList.toggle('open', shouldOpen);
+  chev.classList.toggle('open', shouldOpen);
+}
 
 // ── Tags ──────────────────────────────────────────────────────────────────────
 function renderTags() {
@@ -373,17 +434,27 @@ function getArts() {
 
 // ── Render list ───────────────────────────────────────────────────────────────
 function renderList() {
-  const list = document.getElementById('list');
-  const filtered = getArts();
+  // placeholder 제거
+  document.getElementById('list-placeholder')?.remove();
 
+  // 기존 카드 영역만 교체
+  document.getElementById('inner')?.remove();
+  const list = document.getElementById('list');
+
+  const filtered = getArts();
   if (!filtered.length) {
-    list.innerHTML = `<div class="state"><div class="state-icon">📭</div>아티클이 없어요</div>`;
+    const empty = document.createElement('div');
+    empty.id = 'inner';
+    empty.innerHTML = `<div class="state"><div class="state-icon">📭</div>아티클이 없어요</div>`;
+    list.appendChild(empty);
     return;
   }
 
-  list.innerHTML = '<div class="list-inner" id="inner"></div>';
-  const inner = document.getElementById('inner');
+  const inner = document.createElement('div');
+  inner.id = 'inner';
+  inner.className = 'list-inner';
   filtered.forEach(a => inner.appendChild(mkCard(a)));
+  list.appendChild(inner);
 }
 
 function mkCard(a) {

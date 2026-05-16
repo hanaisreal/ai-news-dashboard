@@ -137,6 +137,29 @@ def ask_claude(prompt):
         raise RuntimeError(f"claude 오류: {result.stderr}")
     return result.stdout.strip()
 
+def get_story(articles, digest):
+    clusters = digest.get('clusters', [])
+    themes   = ' / '.join(c['theme'] for c in clusters)
+    news = '\n'.join(
+        f"- [{a['cat']}] {a['source']}: {a['title']}. {a.get('summary','')[:80]}"
+        for a in articles[:25]
+    )
+    prompt = f"""오늘 AI 세계에서 일어난 일들을 아래 뉴스를 바탕으로 친구에게 말하듯 한국어로 써줘.
+
+규칙:
+- 딱딱한 보고서 X. 지식 많은 친구가 카페에서 신나게 얘기하듯
+- 사건들을 하나의 흐름으로 연결해서 "왜 지금 이게 일어나고 있는지" "앞으로 어떻게 될지" 까지
+- 3~4 문단. 각 문단 3~4문장
+- 이모지 자연스럽게 포함
+- 마지막 줄: 한 문장으로 오늘의 핵심 정리 (💡 로 시작)
+- 스토리 텍스트만 반환 (제목, 설명 없이)
+
+오늘의 큰 흐름: {themes}
+
+오늘 뉴스:
+{news}"""
+    return ask_claude(prompt)
+
 def get_digest(articles):
     listing = '\n'.join(f"[{i}] ({a['cat']}) {a['source']} | {a['title']} | {a['summary'][:120]}"
                         for i, a in enumerate(articles[:45]))
@@ -159,7 +182,7 @@ def build_html(articles, digest, generated_at):
         '커뮤니티':sum(1 for a in articles if a['cat']=='커뮤니티')}}, ensure_ascii=False)
     return open('template.html').read().replace('__DATA__', data_js).replace('__GENTIME__', generated_at)
 
-def save_to_supabase(articles, digest, today, generated_at):
+def save_to_supabase(articles, digest, story, today, generated_at):
     if not SUPABASE_URL or not SUPABASE_KEY:
         print("   [skip] SUPABASE_URL/KEY 없음")
         return
@@ -170,31 +193,33 @@ def save_to_supabase(articles, digest, today, generated_at):
         'date': today,
         'articles': articles,
         'digest': digest,
+        'story': story,
         'total': len(articles),
         'counts': counts,
         'generated_at': generated_at,
     }, on_conflict='date').execute()
 
-def send_telegram(total, digest):
+def _tg(payload):
+    requests.post(f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
+                  json=payload, timeout=10)
+
+def send_telegram(total, digest, story):
     today = datetime.now().strftime('%m/%d')
-    trends = digest.get('trends', [])
-    trends_text = '\n'.join(f'• {t}' for t in trends[:3]) if trends else ''
 
-    text = (f"<b>📰 오늘의 AI 뉴스 — {today}</b>\n"
-            f"총 <b>{total}개</b> 아티클\n\n"
-            + (trends_text if trends_text else ''))
+    # 메시지 1: 알림 + 버튼
+    _tg({
+        'chat_id': TELEGRAM_CHAT_ID,
+        'text': f"<b>📰 오늘의 AI 뉴스 — {today}</b>  |  총 <b>{total}개</b> 아티클",
+        'parse_mode': 'HTML',
+        'reply_markup': {'inline_keyboard': [[
+            {'text': '📱 AI 뉴스 리더 열기',
+             'url': 'https://hanaisreal.github.io/ai-news-dashboard/reader.html'}
+        ]]},
+    })
 
-    keyboard = {'inline_keyboard': [[
-        {'text': '📱 AI 뉴스 리더 열기',
-         'url': 'https://hanaisreal.github.io/ai-news-dashboard/reader.html'}
-    ]]}
-
-    requests.post(
-        f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage',
-        json={'chat_id': TELEGRAM_CHAT_ID, 'text': text,
-              'parse_mode': 'HTML', 'reply_markup': keyboard},
-        timeout=10
-    )
+    # 메시지 2: 스토리 브리핑
+    if story:
+        _tg({'chat_id': TELEGRAM_CHAT_ID, 'text': story[:4000]})
 
 def main():
     print("1. RSS 수집 중...")
@@ -209,8 +234,11 @@ def main():
     today = datetime.now().strftime('%Y-%m-%d')
     generated_at = datetime.now().strftime('%Y년 %m월 %d일 %H:%M 생성')
 
-    print("3. Supabase 저장...")
-    save_to_supabase(articles, digest, today, generated_at)
+    print("3. 스토리 생성 중...")
+    story = get_story(articles, digest)
+
+    print("4. Supabase 저장...")
+    save_to_supabase(articles, digest, story, today, generated_at)
     save_articles_to_db(articles, today)
 
     print("4. HTML 생성 (GitHub Pages 백업)...")
@@ -219,8 +247,8 @@ def main():
     print("   완료")
 
     if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
-        print("5. 텔레그램 전송...")
-        send_telegram(len(articles), digest)
+        print("6. 텔레그램 전송...")
+        send_telegram(len(articles), digest, story)
 
     print("=== 완료 ===")
 
